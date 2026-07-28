@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { ChevronDown, Download, Upload, Grid, Cloud, Check, Share2, FileText, Sparkles, Wifi } from 'lucide-react';
+import { ChevronDown, Download, Upload, Grid, Cloud, Check, Share2, FileText, Sparkles, Wifi, ArrowLeft, Layout } from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
   const {
@@ -8,13 +8,15 @@ export const TopNavbar: React.FC = () => {
     gridType,
     cursors,
     currentUserName,
+    boardTitle,
+    setBoardTitle,
+    setActiveView,
     toggleGrid,
     exportSceneJson,
     loadScene,
   } = useCanvasStore();
 
   const [showMenu, setShowMenu] = useState(false);
-  const [boardTitle, setBoardTitle] = useState('Untitled Board');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -111,7 +113,7 @@ export const TopNavbar: React.FC = () => {
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
-            title="Main Menu"
+            title="Main Menu & Navigation"
           >
             <img
               src="/logo.svg"
@@ -128,7 +130,7 @@ export const TopNavbar: React.FC = () => {
                 position: 'absolute',
                 top: 42,
                 left: 0,
-                width: 260,
+                width: 270,
                 background: '#FFFFFF',
                 borderRadius: 12,
                 border: '1px solid rgba(0,0,0,0.1)',
@@ -139,9 +141,37 @@ export const TopNavbar: React.FC = () => {
                 flexDirection: 'column',
               }}
             >
+              {/* Return to Main Workspace Dashboard Action */}
+              <button
+                onClick={() => {
+                  setActiveView('dashboard');
+                  setShowMenu(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 16px',
+                  background: 'rgba(79, 70, 229, 0.08)',
+                  border: 'none',
+                  color: '#4F46E5',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(79, 70, 229, 0.14)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(79, 70, 229, 0.08)')}
+              >
+                <ArrowLeft size={16} />
+                <span>Back to Main Workspace</span>
+              </button>
+
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
+
               {/* Menu Header / GCP Status */}
-              <div style={{ padding: '8px 14px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: 6 }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>
+              <div style={{ padding: '6px 16px', marginBottom: 4 }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>
                   Cloud Engine Status
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, color: 'var(--accent-emerald)', fontSize: '0.8rem', fontWeight: 600 }}>
@@ -150,6 +180,8 @@ export const TopNavbar: React.FC = () => {
                   <Wifi size={12} style={{ marginLeft: 'auto' }} />
                 </div>
               </div>
+
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
 
               {/* Menu Actions */}
               <button

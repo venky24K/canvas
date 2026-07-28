@@ -2,6 +2,13 @@ import { create } from 'zustand';
 import type { CanvasNode, ToolType, GridType, CollaborativeCursor, RoomState, StyleProperties } from '../types/canvas';
 
 interface CanvasState {
+  // Application View Mode (Dashboard Workspace vs Interactive Drawing Studio)
+  activeView: 'dashboard' | 'canvas';
+  boardTitle: string;
+  setActiveView: (view: 'dashboard' | 'canvas') => void;
+  setBoardTitle: (title: string) => void;
+  openBoard: (title: string, nodes?: CanvasNode[]) => void;
+
   // Nodes & Scene Graph
   nodes: Record<string, CanvasNode>;
   nodeIds: string[]; // Ordered by zIndex
@@ -53,6 +60,29 @@ interface CanvasState {
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
+  // Default to Main Workspace Project Dashboard when application loads
+  activeView: 'dashboard',
+  boardTitle: 'Product Roadmap Q3',
+  setActiveView: (view) => set({ activeView: view }),
+  setBoardTitle: (title) => set({ boardTitle: title }),
+  openBoard: (title, nodesList = []) => set((state) => {
+    const nodesMap: Record<string, CanvasNode> = {};
+    const ids: string[] = [];
+    nodesList.forEach((n) => {
+      nodesMap[n.id] = n;
+      ids.push(n.id);
+    });
+    return {
+      activeView: 'canvas',
+      boardTitle: title,
+      nodes: nodesMap,
+      nodeIds: ids,
+      selectedIds: [],
+      zoom: 1,
+      pan: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 },
+    };
+  }),
+
   // Initialize with completely clean, empty canvas (No mock data!)
   nodes: {},
   nodeIds: [],
@@ -79,7 +109,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     fontFamily: 'Inter',
   },
 
-  // No simulated mock cursors; only real WebSocket peers from GCP Cloud Run will appear
+  // No simulated mock cursors; only real WebSocket peers from GCP Cloud Run appear
   cursors: {},
   currentUserId: `usr-${Math.random().toString(36).substring(2, 8)}`,
   currentUserName: 'venky24K',
