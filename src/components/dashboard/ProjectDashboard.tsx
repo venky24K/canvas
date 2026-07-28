@@ -111,12 +111,14 @@ export const ProjectDashboard: React.FC = () => {
       <aside style={{ width: 250, height: '100%', background: '#F8FAFC', borderRight: '1px solid rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 16px' }}>
         {/* Workspace Header Logo Badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 8px', marginBottom: 20 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 700, fontSize: 18, fontFamily: 'Outfit' }}>
-            N
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Bloom Logo"
+            style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 8, filter: 'drop-shadow(0 2px 6px rgba(79, 70, 229, 0.2))' }}
+          />
           <div>
-            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4F46E5', display: 'block', fontFamily: 'Outfit', lineHeight: 1.2 }}>
-              Nexus
+            <span style={{ fontSize: '1rem', fontWeight: 700, color: '#4F46E5', display: 'block', fontFamily: 'Outfit', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+              Bloom
             </span>
             <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>
               Main Workspace

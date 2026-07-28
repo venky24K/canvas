@@ -113,11 +113,11 @@ export const TopNavbar: React.FC = () => {
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
-            title="Main Menu & Navigation"
+            title="Bloom Main Menu & Navigation"
           >
             <img
               src="/logo.svg"
-              alt="Studio Logo"
+              alt="Bloom Logo"
               style={{ width: 26, height: 26, objectFit: 'contain', borderRadius: 6 }}
             />
             <ChevronDown size={15} color="var(--text-secondary)" style={{ transform: showMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />

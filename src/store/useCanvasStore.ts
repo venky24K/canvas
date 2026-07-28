@@ -116,7 +116,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   currentUserColor: '#6366F1',
   room: {
     roomId: 'studio-gcp-prod-room',
-    roomName: 'Studio Canvas Studio',
+    roomName: 'Bloom Studio Workspace',
     isConnected: true,
     gcpStatus: 'connected',
     onlineCount: 1,
