@@ -5,6 +5,8 @@ import { FloatingToolDock } from './components/toolbar/FloatingToolDock';
 import { ZoomDock } from './components/toolbar/ZoomDock';
 import { ProjectDashboard } from './components/dashboard/ProjectDashboard';
 import { LoginPage } from './components/auth/LoginPage';
+import { LandingPage } from './components/marketing/LandingPage';
+import { BlogPage } from './components/marketing/BlogPage';
 import { useCanvasStore } from './store/useCanvasStore';
 import { useGcpSync } from './collaboration/useGcpSync';
 
@@ -13,6 +15,15 @@ export const App: React.FC = () => {
 
   // Initialize GCP Cloud Run & Real-time Multiplayer Sync
   useGcpSync();
+
+  // Render Marketing Site Pages
+  if (activeView === 'landing') {
+    return <LandingPage />;
+  }
+  
+  if (activeView === 'blog') {
+    return <BlogPage />;
+  }
 
   // Render Glassmorphic GCP Identity Portal
   if (activeView === 'login') {

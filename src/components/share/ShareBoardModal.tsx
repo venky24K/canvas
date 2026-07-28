@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, X, Globe, ChevronRight, Check, Trash2 } from 'lucide-react';
 import { useCanvasStore } from '../../store/useCanvasStore';
@@ -21,9 +21,11 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
   const [inviteEmail, setInviteEmail] = useState('');
   const [copied, setCopied] = useState(false);
   const [anyoneRole, setAnyoneRole] = useState<'can view' | 'can edit' | 'no access'>('can view');
-  
+  const [invitedMembers, setInvitedMembers] = useState<AccessMember[]>([]);
+
   // Fetch real members from backend on open
   useEffect(() => {
+    if (!isOpen) return;
     if (isOpen) {
       const roomId = boardTitle ? boardTitle.toLowerCase().replace(/\s+/g, '-') : 'bloom-gcp-prod-room';
       fetch(`http://localhost:4000/api/rooms/${roomId}/members`)
@@ -42,6 +44,8 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
         .catch(console.error);
     }
   }, [isOpen, boardTitle]);
+
+  if (!isOpen) return null;
 
   const handleCopyLink = () => {
     const url = new URL(window.location.href);
