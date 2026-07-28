@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { GcpAuthService, type GcpUserProfile } from '../../cloud/GcpAuthService';
 import { UserCheck, Wifi, LogOut, Sparkles } from 'lucide-react';
 import { useCanvasStore } from '../../store/useCanvasStore';
@@ -25,9 +26,9 @@ export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClos
     return () => unsubscribe();
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
@@ -38,9 +39,10 @@ export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClos
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
+        zIndex: 999999,
         padding: 20,
         fontFamily: 'Inter, system-ui, sans-serif',
+        pointerEvents: 'auto',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -226,6 +228,7 @@ export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClos
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

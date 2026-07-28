@@ -34,6 +34,9 @@ export const useGcpSync = () => {
   // 2. Initialize Persistent Google Cloud Run WebSockets
   useEffect(() => {
     let socket: Socket | null = null;
+    const urlRoom = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('room') : null;
+    const activeRoomId = urlRoom || 'bloom-gcp-prod-room';
+
     try {
       socket = io(GCP_CLOUD_RUN_SOCKET_URL, {
         reconnectionAttempts: 5,
@@ -42,14 +45,14 @@ export const useGcpSync = () => {
           userId: currentUserId,
           userName: currentUserName,
           color: currentUserColor,
-          room: 'bloom-gcp-prod-room',
+          room: activeRoomId,
         },
       });
 
       setGcpSocket(socket);
 
       socket.on('connect', () => {
-        console.log(`☁️ [GCP Cloud Run WebSockets] Connected successfully to room [bloom-gcp-prod-room] as "${currentUserName}"`);
+        console.log(`☁️ [GCP Cloud Run WebSockets] Connected successfully to room [${activeRoomId}] as "${currentUserName}"`);
         setRoomStatus({ isConnected: true, gcpStatus: 'connected' });
       });
 

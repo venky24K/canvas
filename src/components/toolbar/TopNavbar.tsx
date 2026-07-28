@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
 import { GcpProfileModal } from '../cloud/GcpProfileModal';
+import { ShareBoardModal } from '../share/ShareBoardModal';
 import {
   ChevronDown,
   ChevronRight,
   Cloud,
-  Check,
   Search,
 } from 'lucide-react';
 
@@ -35,9 +35,9 @@ export const TopNavbar: React.FC = () => {
 
   const [showMenu, setShowMenu] = useState(false);
   const [showGcpModal, setShowGcpModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -84,9 +84,7 @@ export const TopNavbar: React.FC = () => {
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 2500);
+    setShowShareModal(true);
   };
 
   // Helper styles for FigJam Dark Menu UI
@@ -738,7 +736,7 @@ export const TopNavbar: React.FC = () => {
             gap: 6,
             padding: '6px 16px',
             borderRadius: 8,
-            background: shareCopied ? '#10B981' : '#8B5CF6',
+            background: '#8B5CF6',
             color: '#FFFFFF',
             fontSize: '0.85rem',
             fontWeight: 600,
@@ -747,23 +745,18 @@ export const TopNavbar: React.FC = () => {
             boxShadow: '0 2px 8px rgba(139, 92, 246, 0.35)',
             transition: 'all 0.2s',
           }}
-          title="Copy Collaborative Workspace Link"
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#7E22CE')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#8B5CF6')}
+          title="Share Collaborative Workspace"
         >
-          {shareCopied ? (
-            <>
-              <Check size={16} />
-              <span>Link Copied!</span>
-            </>
-          ) : (
-            <>
-              <span>Share</span>
-            </>
-          )}
+          <span>Share</span>
         </button>
       </div>
 
       {/* GCP Collaborative Identity Modal */}
       <GcpProfileModal isOpen={showGcpModal} onClose={() => setShowGcpModal(false)} />
+      {/* Share Board Dialog Modal */}
+      <ShareBoardModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} />
     </div>
   );
 };
