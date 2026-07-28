@@ -1,20 +1,34 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { Cloud, Wifi, Download, Upload, Grid, ZoomIn, ZoomOut, Maximize2, Sparkles, ShieldCheck } from 'lucide-react';
+import { ChevronDown, Download, Upload, Grid, Cloud, Check, Share2, FileText, Sparkles, Wifi } from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
   const {
     room,
-    zoom,
     gridType,
     cursors,
     currentUserName,
-    setZoom,
-    setPan,
     toggleGrid,
     exportSceneJson,
     loadScene,
   } = useCanvasStore();
+
+  const [showMenu, setShowMenu] = useState(false);
+  const [boardTitle, setBoardTitle] = useState('Untitled Board');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleExport = () => {
     const jsonString = exportSceneJson();
@@ -22,9 +36,10 @@ export const TopNavbar: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `studio-canvas-board-${Date.now()}.json`;
+    a.download = `${boardTitle.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setShowMenu(false);
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +52,7 @@ export const TopNavbar: React.FC = () => {
         const parsed = JSON.parse(content);
         if (Array.isArray(parsed)) {
           loadScene(parsed);
+          setShowMenu(false);
         }
       } catch (err) {
         console.error('Failed to import board JSON:', err);
@@ -45,131 +61,255 @@ export const TopNavbar: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const resetViewport = () => {
-    setZoom(1);
-    setPan({ x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 });
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2500);
   };
 
   return (
-    <header
+    <div
       style={{
         position: 'fixed',
         top: 16,
-        left: 20,
-        right: 20,
-        height: 56,
+        left: 16,
+        right: 16,
         zIndex: 50,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
+        pointerEvents: 'none', // Allow clicking through empty space between left and right bars
       }}
-      className="glass-panel"
     >
-      {/* Left Section: Brand & GCP Cloud Run Live Status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div
+      {/* LEFT FLOATING BAR: Logo Main Menu Button + Canvas Title */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '6px 14px 6px 10px',
+          background: '#FFFFFF',
+          borderRadius: 12,
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+          pointerEvents: 'auto',
+          position: 'relative',
+        }}
+      >
+        {/* Logo & Down Arrow -> Main Menu Dropdown Button */}
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: 'var(--accent-gradient)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFF',
-              fontWeight: 700,
-              fontSize: 16,
-              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
+              gap: 6,
+              background: showMenu ? 'rgba(0,0,0,0.05)' : 'transparent',
+              border: 'none',
+              padding: '4px 8px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              transition: 'background 0.15s',
             }}
+            title="Main Menu"
           >
-            S
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.02em', fontFamily: 'Outfit', color: 'var(--text-primary)' }}>
-            Studio <span style={{ color: 'var(--accent-primary)' }}>Canvas</span>
-          </span>
+            <img
+              src="/logo.svg"
+              alt="Studio Logo"
+              style={{ width: 26, height: 26, objectFit: 'contain', borderRadius: 6 }}
+            />
+            <ChevronDown size={15} color="var(--text-secondary)" style={{ transform: showMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </button>
+
+          {/* Main Menu Dropdown Window */}
+          {showMenu && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 42,
+                left: 0,
+                width: 260,
+                background: '#FFFFFF',
+                borderRadius: 12,
+                border: '1px solid rgba(0,0,0,0.1)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                padding: '8px 0',
+                zIndex: 100,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {/* Menu Header / GCP Status */}
+              <div style={{ padding: '8px 14px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: 6 }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>
+                  Cloud Engine Status
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, color: 'var(--accent-emerald)', fontSize: '0.8rem', fontWeight: 600 }}>
+                  <Cloud size={14} className="animate-pulse-glow" />
+                  <span>GCP Cloud Run: {room.gcpStatus.toUpperCase()}</span>
+                  <Wifi size={12} style={{ marginLeft: 'auto' }} />
+                </div>
+              </div>
+
+              {/* Menu Actions */}
+              <button
+                onClick={handleExport}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.825rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <Download size={16} color="var(--accent-primary)" />
+                <span>Export Board as JSON</span>
+              </button>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 16px',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.825rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <Upload size={16} color="var(--accent-cyan)" />
+                <span>Import Board JSON...</span>
+                <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+              </label>
+
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
+
+              <button
+                onClick={() => {
+                  toggleGrid();
+                  setShowMenu(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.825rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Grid size={16} color="var(--text-secondary)" />
+                  <span>Grid Background Mode</span>
+                </div>
+                <span style={{ fontSize: '0.7rem', background: 'rgba(0,0,0,0.06)', padding: '2px 6px', borderRadius: 4, textTransform: 'capitalize' }}>
+                  {gridType}
+                </span>
+              </button>
+            </div>
+          )}
         </div>
 
-        <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.1)' }} />
+        {/* Separator Divider */}
+        <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
 
-        {/* Google Cloud Run Live Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--accent-emerald)', background: 'rgba(16, 185, 129, 0.12)', padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-          <Cloud size={14} className="animate-pulse-glow" />
-          <span style={{ fontWeight: 600 }}>GCP Cloud Run: {room.gcpStatus.toUpperCase()}</span>
-          <Wifi size={12} style={{ marginLeft: 2 }} />
+        {/* Editable Canvas Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={boardTitle}
+              onChange={(e) => setBoardTitle(e.target.value)}
+              onBlur={() => setIsEditingTitle(false)}
+              onKeyDown={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
+              autoFocus
+              style={{
+                background: 'rgba(0,0,0,0.04)',
+                border: '1px solid var(--accent-primary)',
+                borderRadius: 6,
+                padding: '3px 8px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                fontFamily: 'Outfit',
+                color: 'var(--text-primary)',
+                outline: 'none',
+              }}
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditingTitle(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                fontFamily: 'Outfit',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              title="Click to rename board"
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              {boardTitle}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Center Section: Zoom Control & Grid Togglers */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button
-          onClick={() => setZoom((z) => Math.max(0.1, z - 0.15))}
-          className="tool-btn"
-          title="Zoom Out"
-        >
-          <ZoomOut size={18} />
-        </button>
-        
-        <button
-          onClick={resetViewport}
-          style={{
-            background: 'rgba(0,0,0,0.04)',
-            border: '1px solid rgba(0,0,0,0.08)',
-            color: 'var(--text-primary)',
-            padding: '4px 12px',
-            borderRadius: 8,
-            fontSize: '0.8125rem',
-            fontFamily: 'JetBrains Mono',
-            cursor: 'pointer',
-            minWidth: 64,
-            textAlign: 'center',
-            fontWeight: 600
-          }}
-          title="Reset Zoom to 100%"
-        >
-          {Math.round(zoom * 100)}%
-        </button>
-
-        <button
-          onClick={() => setZoom((z) => Math.min(10, z + 0.15))}
-          className="tool-btn"
-          title="Zoom In"
-        >
-          <ZoomIn size={18} />
-        </button>
-
-        <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', margin: '0 4px' }} />
-
-        <button
-          onClick={toggleGrid}
-          className={`tool-btn ${gridType !== 'none' ? 'active' : ''}`}
-          title={`Grid Mode: ${gridType.toUpperCase()}`}
-        >
-          <Grid size={18} />
-        </button>
-      </div>
-
-      {/* Right Section: Multiplayer Peers & Board Export/Import */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        {/* Collaborative Peers Roster */}
+      {/* RIGHT FLOATING BAR: Multiplayer Profiles + Vibrant Share Button */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '6px 14px',
+          background: '#FFFFFF',
+          borderRadius: 12,
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+          pointerEvents: 'auto',
+        }}
+      >
+        {/* Collaborative Peers Avatars */}
         <div style={{ display: 'flex', alignItems: 'center', gap: -6 }}>
           {Object.values(cursors).map((c) => (
             <div
               key={c.userId}
               style={{
-                width: 28,
-                height: 28,
+                width: 30,
+                height: 30,
                 borderRadius: '50%',
                 background: c.color,
-                border: '2px solid var(--bg-app)',
+                border: '2px solid #FFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 color: '#FFF',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                 marginLeft: -6,
               }}
               title={`Peer: ${c.userName} (${c.tool})`}
@@ -179,18 +319,18 @@ export const TopNavbar: React.FC = () => {
           ))}
           <div
             style={{
-              width: 28,
-              height: 28,
+              width: 30,
+              height: 30,
               borderRadius: '50%',
               background: 'var(--accent-primary)',
-              border: '2px solid var(--bg-app)',
+              border: '2px solid #FFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '0.75rem',
               fontWeight: 700,
               color: '#FFF',
-              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
               marginLeft: -6,
             }}
             title={`You (${currentUserName})`}
@@ -199,24 +339,40 @@ export const TopNavbar: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.1)' }} />
+        <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
 
-        {/* Import JSON Action */}
-        <label
-          className="tool-btn"
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          title="Import Board JSON"
+        {/* Share Button (Vivid Violet, matching FigJam style) */}
+        <button
+          onClick={handleShare}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 16px',
+            borderRadius: 8,
+            background: shareCopied ? '#10B981' : '#8B5CF6',
+            color: '#FFFFFF',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.35)',
+            transition: 'all 0.2s',
+          }}
+          title="Copy Collaborative Workspace Link"
         >
-          <Upload size={18} />
-          <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
-        </label>
-
-        {/* Export Board Action */}
-        <button onClick={handleExport} className="btn-primary" title="Export Board to JSON">
-          <Download size={16} />
-          <span>Export Board</span>
+          {shareCopied ? (
+            <>
+              <Check size={16} />
+              <span>Link Copied!</span>
+            </>
+          ) : (
+            <>
+              <span>Share</span>
+            </>
+          )}
         </button>
       </div>
-    </header>
+    </div>
   );
 };

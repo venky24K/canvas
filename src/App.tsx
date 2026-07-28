@@ -2,7 +2,7 @@ import React from 'react';
 import { InfiniteStage } from './engine/InfiniteStage';
 import { TopNavbar } from './components/toolbar/TopNavbar';
 import { FloatingToolDock } from './components/toolbar/FloatingToolDock';
-import { PropertiesPanel } from './components/inspector/PropertiesPanel';
+import { ZoomDock } from './components/toolbar/ZoomDock';
 import { useGcpSync } from './collaboration/useGcpSync';
 
 export const App: React.FC = () => {
@@ -11,17 +11,17 @@ export const App: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-app)' }}>
-      {/* Top Header Navigation & Status */}
+      {/* Top Split Header Navigation Pills (Left Menu & Right Profiles/Share) */}
       <TopNavbar />
 
       {/* Core Infinite GPU-Accelerated Hybrid Canvas */}
       <InfiniteStage />
 
-      {/* Bottom Floating Interactive Tool Dock */}
+      {/* Bottom Center Floating Interactive Tool Dock */}
       <FloatingToolDock />
 
-      {/* Right Sidebar Inspector & Developer Code Export Panel */}
-      <PropertiesPanel />
+      {/* Bottom Right Corner Zoom & Grid Controls */}
+      <ZoomDock />
     </div>
   );
 };

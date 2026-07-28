@@ -30,6 +30,7 @@ interface CanvasState {
   setPan: (pan: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
   toggleGrid: () => void;
   toggleSnapping: () => void;
+  updateDefaultStyles: (updates: Partial<StyleProperties & { fontSize: number; fontFamily: string }>) => void;
   
   // Node Manipulation Actions
   addNode: (node: CanvasNode) => void;
@@ -108,6 +109,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   toggleSnapping: () => set((state) => ({ showSnappingGuides: !state.showSnappingGuides })),
   
+  updateDefaultStyles: (updates) => set((state) => ({
+    defaultStyles: { ...state.defaultStyles, ...updates }
+  })),
+
   addNode: (node) => set((state) => ({
     nodes: { ...state.nodes, [node.id]: node },
     nodeIds: [...state.nodeIds, node.id],
