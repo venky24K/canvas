@@ -1,38 +1,40 @@
-# Architecture Blueprint: Studio Canvas (Figma × Excalidraw Hybrid)
+# Architecture Blueprint: Bloom Collaborative Studio (Figma × Excalidraw Hybrid)
 
-This document delineates the software architecture, design patterns, data structure specifications, and rendering pipeline of **Studio Canvas**, an enterprise-grade real-time collaborative design studio engineered for Frontend R&D evaluation.
+This document delineates the software architecture, design patterns, data structure specifications, and rendering pipeline of **Bloom**, an enterprise-grade real-time collaborative UX design and freehand sketching studio engineered for Frontend R&D evaluation.
 
 ---
 
 ## 1. System Topology & Architectural Philosophy
 
-Studio Canvas solves a long-standing UX division in modern product design software: the boundary between **unconstrained freehand ideation** (whiteboarding/sketching like Excalidraw or tldraw) and **structured vector design & developer handoff** (layout software like Figma or Penpot).
+Bloom solves a long-standing UX division in modern product design software: the boundary between **unconstrained freehand ideation** (whiteboarding/sketching like Excalidraw or FigJam) and **structured vector design & developer handoff** (layout software like Figma or Penpot).
 
 ### Core Architectural Drivers:
 1. **Zero-Latency Rendering Pipeline:** Leveraging GPU-accelerated HTML5 Canvas via `Konva.js` and React Fiber reconciler optimization (`react-konva`).
-2. **Deterministic State Synchronization:** A decoupled data model managed by lightweight reactive observables (`Zustand`) engineered for synchronization via Conflict-Free Replicated Data Types (CRDTs / `Yjs` over WebSockets).
+2. **Deterministic State & Time-Travel Synchronization:** A decoupled data model managed by lightweight reactive observables (`Zustand`) equipped with an atomic rolling history buffer and CRDT-ready WebSocket serialization.
 3. **Cloud-Native Backbone (Google Cloud Platform):** Real-time persistent state engines running on **Google Cloud Run**, scalable asset caching via **Google Cloud Storage (GCS)**, and persistent document metadata on **Google Cloud Firestore**.
 
 ---
 
-## 2. High-Level Data Flow & Scene Graph
+## 2. High-Level Data Flow & View Navigation
+
+Bloom utilizes a dual-view reactive routing state (`activeView: 'dashboard' | 'canvas'`) allowing users to switch fluidly between high-level project management and immersive canvas creation.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          STUDIO CANVAS CLIENT                          │
+│                              BLOOM CLIENT                              │
 │                                                                        │
 │   ┌────────────────────────────────────────────────────────────────┐   │
-│   │                 Reactive Store (Zustand / Yjs)                 │   │
+│   │             Zustand Reactive Store & History Stack             │   │
 │   └───────────────▲──────────────────────────────▲─────────────────┘   │
 │                   │                              │                     │
 │        State Modifications             Read Immutable Scene            │
 │                   │                              │                     │
 │   ┌───────────────▼──────────────┐       ┌───────▼─────────────────┐   │
-│   │    Tool Action Handlers      │       │   React-Konva Stage     │   │
-│   │  (Pointer / Freehand / Pan)  │       │  (WebGL / 2D Canvas)    │   │
+│   │    Tool & Hotkey Handlers    │       │   React-Konva Stage     │   │
+│   │ (FigJam Dock / Hotkey Engine)│       │  (WebGL / 2D Canvas)    │   │
 │   └──────────────────────────────┘       └─────────────────────────┘   │
 └───────────────────────────────────▲────────────────────────────────────┘
-                                    │ WebSockets (CRDT / JSON Diff)
+                                    │ WebSockets (JSON Diff & Cursors)
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │                    GCP CLOUD RUN PERSISTENT SERVER                     │
 └────────────────────────────────────────────────────────────────────────┘
@@ -40,16 +42,16 @@ Studio Canvas solves a long-standing UX division in modern product design softwa
 
 ---
 
-## 3. Core Data Schema (The Scene Graph)
+## 3. Core Data Schema (The Scene Graph & History)
 
-Every visual item on the infinite canvas is represented as a polymorphemic vector or stroke node (`CanvasNode`). This immutable schema guarantees serialization fidelity and easy calculation of CSS inspection strings.
+Every visual item on the infinite canvas is represented as a polymorphic vector or stroke node (`CanvasNode`). This immutable schema guarantees serialization fidelity and effortless atomic history snapshot recording.
 
 ```typescript
-export type NodeType = 'rectangle' | 'ellipse' | 'artboard' | 'freehand' | 'text' | 'arrow' | 'sticky';
+export type ToolType = 'select' | 'hand' | 'rectangle' | 'ellipse' | 'artboard' | 'freehand' | 'highlighter' | 'text' | 'arrow' | 'sticky' | 'eraser' | 'laser';
 
 export interface BaseNode {
   id: string;
-  type: NodeType;
+  type: ToolType;
   x: number;
   y: number;
   width: number;
@@ -66,7 +68,7 @@ export interface StyleProperties {
   fillColor: string;
   fillOpacity: number;
   strokeColor: string;
-  strokeWidth: number;
+  strokeWidth: number; // Supports S (4px), M (10px), L (20px), XL (36px)
   strokeDash?: number[];
   cornerRadius?: number;
   shadowColor?: string;
@@ -76,16 +78,9 @@ export interface StyleProperties {
   isGlassmorphic?: boolean;
 }
 
-export interface FreehandNode extends BaseNode, StyleProperties {
-  type: 'freehand';
-  points: number[][]; // [[x, y, pressure], ...]
-  isHighlighter?: boolean;
-}
-
-export interface ArtboardNode extends BaseNode, StyleProperties {
-  type: 'artboard';
-  preset: 'iphone16' | 'macbook' | 'custom';
-  clipChildren: boolean;
+export interface HistorySnapshot {
+  nodes: Record<string, CanvasNode>;
+  nodeIds: string[];
 }
 ```
 
@@ -94,22 +89,20 @@ export interface ArtboardNode extends BaseNode, StyleProperties {
 ## 4. Subsystem Components
 
 ### A. Rendering & Grid Engine (`/src/engine`)
-* **`InfiniteStage.tsx`**: Governs global transformation matrices, handling multi-touch gestures, space-bar panning, mouse wheel zoom (ranging from `10%` to `1000%`), and viewport boundary recalculations.
-* **`GridLayer.tsx`**: Dynamically generates visual coordinate references (Dot matrix or Blueprint grid lines) based on current zoom factors to prevent visual clutter at zoomed-out ratios.
-* **`SnapGuideEngine.ts`**: Real-time bounding-box alignment calculator. When a node is dragged or resized, it computes distances against adjacent node centroids and borders, triggering cyan snapping lines within a `< 5px` hysteresis tolerance.
+* **`InfiniteStage.tsx`**: Governs global transformation matrices, handling multi-touch gestures, space-bar panning, mouse wheel zoom (ranging from `20%` to `500%`), and viewport boundary recalculations. Implements infinite CSS grid backgrounds (Dot Matrix, Blueprint Lines) for 60 FPS performance without Konva DOM node overhead.
+* **`NodeRenderer.tsx`**: Responsible for rendering shapes, text, connector arrows, device artboards, and smooth ink curves. Integrates `perfect-freehand` to convert raw sample arrays into simulated pressure SVG paths.
 
-### B. Hybrid Creation Suite
-* **Freehand Ink Algorithm**: Integrates `perfect-freehand` to translate raw pointer sample points into smooth SVG path geometry with simulated pen pressure and tapered ends.
-* **Vector & Artboard Framing**: Enforces clipping masks when sibling nodes fall within an Artboard's bounding rect, mimicking Figma's container auto-nesting.
+### B. Time-Travel Undo / Redo Stack
+To avoid state duplication during high-frequency mouse events:
+1. **Atomic Actions (Shapes, Delete, Duplicate, Reorder):** Before mutation occurs, `useCanvasStore` pushes the preceding state snapshot onto a rolling 30-item `history` buffer and clears the `future` stack.
+2. **Continuous Ink Drawing:** When `handleMouseDown` initializes a stroke, the pre-stroke state is recorded. Throughout `handleMouseMove`, coordinate samples append directly without polluting the history array. When `handleMouseUp` concludes the stroke, the timeline remains clean and ready for instant single-click Undo recovery (`Cmd+Z`).
 
-### C. Developer Inspect & Export Engine (`/src/components/inspector`)
-When an item is highlighted, the inspector evaluates its spatial and stylistic primitives to emit:
-* **Vanilla CSS**: Standard rules (e.g., `border-radius`, `box-shadow`, `backdrop-filter`).
-* **Tailwind Tokens**: Compiled design utility strings (e.g., `rounded-2xl border border-white/20 bg-slate-900/50 shadow-2xl backdrop-blur-xl`).
-* **SVG Strings**: Raw vector markup ready for direct integration into production web apps.
+### C. FigJam Capsule Dock & Inline Styling (`/src/components/toolbar`)
+* **`FloatingToolDock.tsx`**: Centers at the bottom of the studio interface, organizing tools into 4 functional pods (Navigation, UI Containers, Studio Ink, and Ideation).
+* **Inline Quick Palette**: Replaces obstructive traditional sidebars by surfacing dynamic color swatches and brush thickness pills (`S=4px`, `M=10px`, `L=20px`, `XL=36px`) immediately above the dock when relevant drawing tools are active.
 
 ---
 
-## 5. Security & Modular Isolation
+## 5. Collaboration Security & State Serialization
 
-All real-time message broadcasting goes through schema validation to prevent malformed node payloads from polluting room state. Client-side storage leverages `IndexedDB` as an offline fall-back cache, automatically purging stale deltas upon successful synchronization with Google Cloud Firestore.
+All real-time message broadcasting goes through JSON schema validation to prevent malformed node payloads from polluting room state. Exported JSON scene packages preserve complete layer hierarchies and design tokens for clean team handoffs.
