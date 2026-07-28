@@ -9,12 +9,18 @@ import {
   Settings,
   Search,
   Bell,
+  ChevronDown,
+  ChevronRight,
+  Layout,
+  Download,
+  LogOut,
 } from 'lucide-react';
 
 export const ProjectDashboard: React.FC = () => {
   const { openBoard } = useCanvasStore();
   const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const boards: Array<{
     id: string;
@@ -88,21 +94,317 @@ export const ProjectDashboard: React.FC = () => {
     <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', overflow: 'hidden', color: '#0F172A' }}>
       {/* LEFT SIDEBAR NAVIGATION */}
       <aside style={{ width: 250, height: '100%', background: '#F8FAFC', borderRight: '1px solid rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 16px' }}>
-        {/* Workspace Header Logo Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 8px', marginBottom: 20 }}>
-          <img
-            src="/logo.svg"
-            alt="Bloom Logo"
-            style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 8, filter: 'drop-shadow(0 2px 6px rgba(79, 70, 229, 0.2))' }}
-          />
-          <div>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: '#4F46E5', display: 'block', fontFamily: 'Outfit', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              Bloom
-            </span>
-            <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>
-              Main Workspace
-            </span>
-          </div>
+        {/* Profile Dropdown & Notifications Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, position: 'relative', zIndex: 100 }}>
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '5px 12px 5px 6px',
+              borderRadius: 10,
+              background: '#FFFFFF',
+              color: '#0F172A',
+              border: '1px solid #E2E8F0',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#F8FAFC';
+              e.currentTarget.style.borderColor = '#CBD5E1';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#FFFFFF';
+              e.currentTarget.style.borderColor = '#E2E8F0';
+            }}
+          >
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80"
+                alt="venky"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            </div>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>venky</span>
+            <ChevronDown size={15} color="#64748B" />
+          </button>
+
+          <button
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#64748B',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#EEF2FF';
+              e.currentTarget.style.color = '#4F46E5';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = '#64748B';
+            }}
+            title="Notifications"
+          >
+            <Bell size={18} />
+          </button>
+
+          {/* Backdrop to dismiss popover */}
+          {showProfileMenu && (
+            <div
+              style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+              onClick={() => setShowProfileMenu(false)}
+            />
+          )}
+
+          {/* Bloom Themed Account Popover Menu */}
+          {showProfileMenu && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 46,
+                left: 0,
+                width: 300,
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: 14,
+                boxShadow: '0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.05)',
+                zIndex: 1000,
+                padding: '16px 0 8px 0',
+                fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+                color: '#0F172A',
+              }}
+            >
+              {/* Header Profile Photo & Info */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 20px 14px 20px' }}>
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
+                    marginBottom: 10,
+                    boxShadow: '0 4px 14px rgba(79, 70, 229, 0.18)',
+                    border: '2px solid #FFFFFF',
+                    position: 'relative',
+                  }}
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"
+                    alt="venky"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                </div>
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
+                  venky
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 500 }}>
+                  venkatesh_konnipati@srmap.edu.in
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, background: '#F1F5F9', width: '100%', margin: '4px 0' }} />
+
+              {/* Group 1: Preferences */}
+              <div style={{ padding: '4px 0' }}>
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#334155',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#EEF2FF';
+                    e.currentTarget.style.color = '#4F46E5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                >
+                  <Layout size={18} />
+                  <span>Change theme</span>
+                  <ChevronRight size={16} style={{ marginLeft: 'auto', color: '#94A3B8' }} />
+                </button>
+
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#334155',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#EEF2FF';
+                    e.currentTarget.style.color = '#4F46E5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                >
+                  <Download size={18} />
+                  <span>Get desktop app</span>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, background: '#F1F5F9', width: '100%', margin: '4px 0' }} />
+
+              {/* Group 2: Community Profile */}
+              <div style={{ padding: '4px 0' }}>
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      background: '#3B82F6',
+                    }}
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80"
+                      alt="venky"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
+                    <span style={{ color: '#0F172A', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      Create a community profile
+                    </span>
+                    <span style={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      venkatesh_konnipati@srmap.edu.in
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, background: '#F1F5F9', width: '100%', margin: '4px 0' }} />
+
+              {/* Group 3: Account Actions */}
+              <div style={{ padding: '4px 0 0 0' }}>
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#334155',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#EEF2FF';
+                    e.currentTarget.style.color = '#4F46E5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                >
+                  <Plus size={18} />
+                  <span>Add account</span>
+                </button>
+
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#334155',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#FFF1F2';
+                    e.currentTarget.style.color = '#E11D48';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                >
+                  <LogOut size={18} />
+                  <span>Log out</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Primary "+ New Board" Action */}
@@ -172,7 +474,7 @@ export const ProjectDashboard: React.FC = () => {
           })}
         </nav>
 
-        {/* Footer Area: Settings & User Identity */}
+        {/* Footer Area: Settings */}
         <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <button
             style={{
@@ -193,35 +495,6 @@ export const ProjectDashboard: React.FC = () => {
             <Settings size={18} color="#64748B" />
             <span>Settings</span>
           </button>
-
-          {/* User Account Tile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 4px' }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                background: '#0F172A',
-                color: '#FFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: 14,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-              }}
-            >
-              AM
-            </div>
-            <div>
-              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>
-                Alex Mercer
-              </span>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 500 }}>
-                Free Plan
-              </span>
-            </div>
-          </div>
         </div>
       </aside>
 
@@ -230,7 +503,7 @@ export const ProjectDashboard: React.FC = () => {
         {/* Top Header: Welcome Banner & Live Search */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0F172A', letterSpacing: '-0.01em' }}>
-            Welcome back, Alex.
+            Welcome back, venky.
           </h1>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -257,24 +530,6 @@ export const ProjectDashboard: React.FC = () => {
                 onBlur={(e) => (e.currentTarget.style.borderColor = '#E2E8F0')}
               />
             </div>
-
-            <button
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 8,
-                border: '1px solid #E2E8F0',
-                background: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: '#64748B',
-              }}
-              title="Notifications"
-            >
-              <Bell size={18} />
-            </button>
           </div>
         </div>
 
