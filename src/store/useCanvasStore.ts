@@ -235,10 +235,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     transmitNodeUpdated(id, updates);
     const nextNodes = {
       ...state.nodes,
-      [id]: { ...existing, ...updates },
+      [id]: { ...existing, ...updates } as CanvasNode,
     };
     if (record) {
-      GcpFirestoreService.saveBoardSnapshot(state.boardTitle, state.boardTitle, Object.values(nextNodes), state.currentUserId);
+      GcpFirestoreService.saveBoardSnapshot(state.boardTitle, state.boardTitle, Object.values(nextNodes) as CanvasNode[], state.currentUserId);
       const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
       return {
         nodes: nextNodes,
@@ -363,7 +363,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return {
       nodes: {
         ...state.nodes,
-        [id]: { ...existing, ...updates },
+        [id]: { ...existing, ...updates } as CanvasNode,
       },
     };
   }),

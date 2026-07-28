@@ -21,14 +21,12 @@ export const InfiniteStage: React.FC = () => {
     cursors,
     defaultStyles,
     currentUserName,
-    currentUserColor,
     setZoom,
     setPan,
     setSelectedIds,
     addNode,
     updateNode,
     deleteSelected,
-    recordSnapshot,
   } = useCanvasStore();
 
   useEffect(() => {

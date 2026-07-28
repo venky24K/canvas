@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { ZoomIn, ZoomOut, Grid, HelpCircle } from 'lucide-react';
+import { ZoomIn, ZoomOut, Grid } from 'lucide-react';
 
 export const ZoomDock: React.FC = () => {
   const { zoom, setZoom, setPan, gridType, toggleGrid } = useCanvasStore();

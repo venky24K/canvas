@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
 import type { CanvasNode, StyleProperties } from '../../types/canvas';
-import { Sliders, Code, Copy, Check, Layers, Sparkles, Palette, Grid as GridIcon, ShieldCheck } from 'lucide-react';
+import { Code, Copy, Check, Layers, Palette } from 'lucide-react';
 
 export const PropertiesPanel: React.FC = () => {
   const { nodes, selectedIds, updateSelectedNodes, defaultStyles, updateDefaultStyles, gridType, toggleGrid, showSnappingGuides, toggleSnapping } = useCanvasStore();
@@ -327,7 +327,7 @@ export const PropertiesPanel: React.FC = () => {
               max="1"
               step="0.05"
               value={selectedNode.opacity || 1}
-              onChange={(e) => handleStyleChange('opacity', parseFloat(e.target.value))}
+              onChange={(e) => updateSelectedNodes({ opacity: parseFloat(e.target.value) })}
               style={{ width: '100%', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
             />
           </div>

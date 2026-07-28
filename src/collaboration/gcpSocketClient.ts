@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import type { CanvasNode } from '../types/canvas';
 
 export let gcpSocket: Socket | null = null;

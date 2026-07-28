@@ -168,7 +168,9 @@ export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClos
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 }}>
-              <UserCheck size={22} color="#10B981" title="Active Authenticated Session" />
+              <div title="Active Authenticated Session">
+                <UserCheck size={22} color="#10B981" />
+              </div>
               <button
                 onClick={handleSignOut}
                 style={{

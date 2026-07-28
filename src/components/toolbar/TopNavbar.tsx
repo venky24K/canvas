@@ -4,25 +4,9 @@ import { GcpProfileModal } from '../cloud/GcpProfileModal';
 import {
   ChevronDown,
   ChevronRight,
-  Download,
-  Upload,
-  Grid,
   Cloud,
   Check,
-  Wifi,
-  ArrowLeft,
   Search,
-  Undo2,
-  Redo2,
-  Copy,
-  Trash2,
-  Layers,
-  ArrowUp,
-  ArrowDown as ArrowDownIcon,
-  HelpCircle,
-  Settings,
-  FolderPlus,
-  Zap,
 } from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
