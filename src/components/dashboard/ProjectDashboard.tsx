@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { GcpProfileModal } from '../cloud/GcpProfileModal';
 import {
   Plus,
   Clock,
@@ -10,43 +9,21 @@ import {
   Settings,
   Search,
   Bell,
-  MoreHorizontal,
-  Folder,
-  ArrowRight,
 } from 'lucide-react';
 
 export const ProjectDashboard: React.FC = () => {
-  const { setActiveView, openBoard, currentUserName, currentUserColor } = useCanvasStore();
+  const { openBoard } = useCanvasStore();
   const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
-  const [showGcpModal, setShowGcpModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const boards = [
-    {
-      id: 'board-1',
-      title: 'Product Roadmap Q3',
-      edited: 'Edited 2h ago',
-      avatars: ['#6366F1', '#10B981', '#F43F5E'],
-      extraAvatars: '+2',
-      type: 'roadmap',
-    },
-    {
-      id: 'board-2',
-      title: 'User Persona Flow',
-      edited: 'Edited yesterday',
-      avatars: ['#8B5CF6', '#F59E0B'],
-      extraAvatars: null,
-      type: 'flow',
-    },
-    {
-      id: 'board-3',
-      title: 'API Architecture',
-      edited: 'Edited 3 days ago',
-      avatars: ['#0EA5E9', '#0F172A'],
-      extraAvatars: null,
-      type: 'api',
-    },
-  ];
+  const boards: Array<{
+    id: string;
+    title: string;
+    edited: string;
+    avatars: string[];
+    extraAvatars?: string | null;
+    type: string;
+  }> = [];
 
   const filteredBoards = boards.filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -298,43 +275,6 @@ export const ProjectDashboard: React.FC = () => {
             >
               <Bell size={18} />
             </button>
-
-            {/* GCP Identity Platform Account Badge */}
-            <button
-              onClick={() => setShowGcpModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 14px',
-                borderRadius: 20,
-                background: '#F8FAFC',
-                border: '1px solid #CBD5E1',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-              title="Profile & Account Settings"
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#EFF6FF')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-            >
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  background: currentUserColor || '#4F46E5',
-                  color: '#FFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                }}
-              >
-                {currentUserName ? currentUserName.charAt(0) : 'V'}
-              </div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0F172A' }}>{currentUserName}</span>
-            </button>
           </div>
         </div>
 
@@ -484,9 +424,6 @@ export const ProjectDashboard: React.FC = () => {
             </span>
           </div>
         </div>
-
-        {/* GCP Collaborative Identity Modal */}
-        <GcpProfileModal isOpen={showGcpModal} onClose={() => setShowGcpModal(false)} />
       </main>
     </div>
   );
