@@ -1,6 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { ChevronDown, Download, Upload, Grid, Cloud, Check, Wifi, ArrowLeft } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Upload,
+  Grid,
+  Cloud,
+  Check,
+  Wifi,
+  ArrowLeft,
+  Search,
+  Undo2,
+  Redo2,
+  Copy,
+  Trash2,
+  Layers,
+  ArrowUp,
+  ArrowDown as ArrowDownIcon,
+  HelpCircle,
+  Settings,
+  FolderPlus,
+  Zap,
+} from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
   const {
@@ -9,14 +31,24 @@ export const TopNavbar: React.FC = () => {
     cursors,
     currentUserName,
     boardTitle,
+    nodeIds,
     setBoardTitle,
     setActiveView,
     toggleGrid,
     exportSceneJson,
     loadScene,
+    undo,
+    redo,
+    deleteSelected,
+    duplicateSelected,
+    bringToFront,
+    sendToBack,
+    setSelectedIds,
+    setZoom,
   } = useCanvasStore();
 
   const [showMenu, setShowMenu] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -26,6 +58,7 @@ export const TopNavbar: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+        setActiveSubmenu(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -69,6 +102,37 @@ export const TopNavbar: React.FC = () => {
     setTimeout(() => setShareCopied(false), 2500);
   };
 
+  // Helper styles for FigJam Dark Menu UI
+  const menuItemStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '7px 16px',
+    background: 'transparent',
+    border: 'none',
+    color: '#E5E5E5',
+    fontSize: '0.8125rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+    width: '100%',
+    textAlign: 'left',
+    transition: 'background 0.1s',
+  };
+
+  const menuShortcutStyle: React.CSSProperties = {
+    fontSize: '0.75rem',
+    color: '#888888',
+    fontWeight: 500,
+    fontFamily: 'JetBrains Mono, monospace',
+    marginLeft: 16,
+  };
+
+  const separatorStyle: React.CSSProperties = {
+    height: 1,
+    background: '#383838',
+    margin: '6px 0',
+  };
+
   return (
     <div
       style={{
@@ -76,14 +140,14 @@ export const TopNavbar: React.FC = () => {
         top: 16,
         left: 16,
         right: 16,
-        zIndex: 50,
+        zIndex: 100,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        pointerEvents: 'none', // Allow clicking through empty space between left and right bars
+        pointerEvents: 'none', // Allow clicking canvas space between left and right pills
       }}
     >
-      {/* LEFT FLOATING BAR: Logo Main Menu Button + Canvas Title */}
+      {/* LEFT FLOATING PILL: Logo + Dropdown Menu Button & Canvas Title */}
       <div
         style={{
           display: 'flex',
@@ -98,163 +162,466 @@ export const TopNavbar: React.FC = () => {
           position: 'relative',
         }}
       >
-        {/* Logo & Down Arrow -> Main Menu Dropdown Button */}
+        {/* Logo & Chevron Down -> Main Menu Trigger */}
         <div ref={menuRef} style={{ position: 'relative' }}>
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => {
+              setShowMenu(!showMenu);
+              setActiveSubmenu(null);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              background: showMenu ? 'rgba(0,0,0,0.05)' : 'transparent',
+              background: showMenu ? 'rgba(0,0,0,0.06)' : 'transparent',
               border: 'none',
               padding: '4px 8px',
               borderRadius: 8,
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
-            title="Bloom Main Menu & Navigation"
+            title="Bloom Main Menu"
           >
             <img
               src="/logo.svg"
               alt="Bloom Logo"
               style={{ width: 26, height: 26, objectFit: 'contain', borderRadius: 6 }}
             />
-            <ChevronDown size={15} color="var(--text-secondary)" style={{ transform: showMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            <ChevronDown size={15} color="#475569" style={{ transform: showMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
 
-          {/* Main Menu Dropdown Window */}
+          {/* FIGJAM STYLE DARK OBSIDIAN FLOATING MAIN MENU */}
           {showMenu && (
             <div
               style={{
                 position: 'absolute',
                 top: 42,
                 left: 0,
-                width: 270,
-                background: '#FFFFFF',
+                width: 236,
+                background: '#242424',
+                color: '#E5E5E5',
                 borderRadius: 12,
-                border: '1px solid rgba(0,0,0,0.1)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                border: '1px solid #363636',
+                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35)',
                 padding: '8px 0',
-                zIndex: 100,
+                zIndex: 110,
                 display: 'flex',
                 flexDirection: 'column',
+                fontFamily: 'Inter, system-ui, sans-serif',
               }}
+              onMouseLeave={() => setActiveSubmenu(null)}
             >
-              {/* Return to Main Workspace Dashboard Action */}
+              {/* Top Action: Return to files / main workspace */}
               <button
                 onClick={() => {
                   setActiveView('dashboard');
                   setShowMenu(false);
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 16px',
-                  background: 'rgba(79, 70, 229, 0.08)',
-                  border: 'none',
-                  color: '#4F46E5',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textAlign: 'left',
+                style={menuItemStyle}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#363636';
+                  setActiveSubmenu(null);
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(79, 70, 229, 0.14)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(79, 70, 229, 0.08)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
-                <ArrowLeft size={16} />
-                <span>Back to Main Workspace</span>
+                <span style={{ fontWeight: 600 }}>Back to files</span>
               </button>
 
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
+              <div style={separatorStyle} />
 
-              {/* Menu Header / GCP Status */}
-              <div style={{ padding: '6px 16px', marginBottom: 4 }}>
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>
-                  Cloud Engine Status
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, color: 'var(--accent-emerald)', fontSize: '0.8rem', fontWeight: 600 }}>
-                  <Cloud size={14} className="animate-pulse-glow" />
-                  <span>GCP Cloud Run: {room.gcpStatus.toUpperCase()}</span>
-                  <Wifi size={12} style={{ marginLeft: 'auto' }} />
-                </div>
-              </div>
-
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
-
-              {/* Menu Actions */}
+              {/* Quick Actions Search row */}
               <button
-                onClick={handleExport}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 16px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.825rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
+                style={{ ...menuItemStyle, color: '#A0A0A0' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#363636';
+                  setActiveSubmenu(null);
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <Download size={16} color="var(--accent-primary)" />
-                <span>Export Board as JSON</span>
-              </button>
-
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 16px',
-                  background: 'transparent',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.825rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <Upload size={16} color="var(--accent-cyan)" />
-                <span>Import Board JSON...</span>
-                <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
-              </label>
-
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
-
-              <button
-                onClick={() => {
-                  toggleGrid();
-                  setShowMenu(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 16px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.825rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                onClick={() => setShowMenu(false)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Grid size={16} color="var(--text-secondary)" />
-                  <span>Grid Background Mode</span>
+                  <Search size={14} color="#A0A0A0" />
+                  <span>Actions...</span>
                 </div>
-                <span style={{ fontSize: '0.7rem', background: 'rgba(0,0,0,0.06)', padding: '2px 6px', borderRadius: 4, textTransform: 'capitalize' }}>
-                  {gridType}
-                </span>
+                <span style={menuShortcutStyle}>⌘K</span>
+              </button>
+
+              <div style={separatorStyle} />
+
+              {/* CATEGORIES WITH HOVER SUB-MENUS */}
+              
+              {/* FILE CATEGORY */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{ ...menuItemStyle, background: activeSubmenu === 'file' ? '#363636' : 'transparent' }}
+                  onMouseEnter={() => setActiveSubmenu('file')}
+                >
+                  <span>File</span>
+                  <ChevronRight size={14} color="#888888" />
+                </button>
+
+                {activeSubmenu === 'file' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      left: 232,
+                      width: 230,
+                      background: '#242424',
+                      border: '1px solid #363636',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
+                      padding: '8px 0',
+                      zIndex: 120,
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setActiveView('dashboard');
+                        setShowMenu(false);
+                      }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>New Board...</span>
+                      <span style={menuShortcutStyle}>⌘N</span>
+                    </button>
+                    <div style={separatorStyle} />
+                    <button
+                      onClick={handleExport}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Export as JSON</span>
+                      <span style={menuShortcutStyle}>⌘E</span>
+                    </button>
+                    <label
+                      style={{ ...menuItemStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Import Board JSON...</span>
+                      <span style={menuShortcutStyle}>⌘I</span>
+                      <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+                    </label>
+                    <div style={separatorStyle} />
+                    <button
+                      onClick={() => setShowMenu(false)}
+                      style={{ ...menuItemStyle, color: '#10B981' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Save to GCP Cloud</span>
+                      <span style={menuShortcutStyle}>☁ Connected</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* EDIT CATEGORY (Matches user screenshot exactly!) */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{ ...menuItemStyle, background: activeSubmenu === 'edit' ? '#363636' : 'transparent' }}
+                  onMouseEnter={() => setActiveSubmenu('edit')}
+                >
+                  <span>Edit</span>
+                  <ChevronRight size={14} color="#888888" />
+                </button>
+
+                {activeSubmenu === 'edit' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -12,
+                      left: 232,
+                      width: 220,
+                      background: '#242424',
+                      border: '1px solid #363636',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
+                      padding: '8px 0',
+                      zIndex: 120,
+                    }}
+                  >
+                    <button
+                      onClick={() => { undo(); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Undo</span>
+                      <span style={menuShortcutStyle}>⌘Z</span>
+                    </button>
+                    <button
+                      onClick={() => { redo(); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Redo</span>
+                      <span style={menuShortcutStyle}>⇧⌘Z</span>
+                    </button>
+                    <div style={separatorStyle} />
+                    <button
+                      onClick={() => { duplicateSelected(); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Duplicate</span>
+                      <span style={menuShortcutStyle}>⌘D</span>
+                    </button>
+                    <button
+                      onClick={() => { deleteSelected(); setShowMenu(false); }}
+                      style={{ ...menuItemStyle, color: '#F43F5E' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Delete</span>
+                      <span style={menuShortcutStyle}>⌫</span>
+                    </button>
+                    <div style={separatorStyle} />
+                    <button
+                      onClick={() => { setSelectedIds(nodeIds); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Select all</span>
+                      <span style={menuShortcutStyle}>⌘A</span>
+                    </button>
+                    <button
+                      onClick={() => { setSelectedIds([]); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Select none</span>
+                      <span style={menuShortcutStyle}>⎋</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* VIEW CATEGORY */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{ ...menuItemStyle, background: activeSubmenu === 'view' ? '#363636' : 'transparent' }}
+                  onMouseEnter={() => setActiveSubmenu('view')}
+                >
+                  <span>View</span>
+                  <ChevronRight size={14} color="#888888" />
+                </button>
+
+                {activeSubmenu === 'view' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -12,
+                      left: 232,
+                      width: 230,
+                      background: '#242424',
+                      border: '1px solid #363636',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
+                      padding: '8px 0',
+                      zIndex: 120,
+                    }}
+                  >
+                    <button
+                      onClick={() => { toggleGrid(); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Toggle Grid Matrix ({gridType})</span>
+                      <span style={menuShortcutStyle}>⌘G</span>
+                    </button>
+                    <div style={separatorStyle} />
+                    <button
+                      onClick={() => { setZoom((z) => Math.min(5, z + 0.2)); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Zoom In</span>
+                      <span style={menuShortcutStyle}>⌘+</span>
+                    </button>
+                    <button
+                      onClick={() => { setZoom((z) => Math.max(0.2, z - 0.2)); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Zoom Out</span>
+                      <span style={menuShortcutStyle}>⌘-</span>
+                    </button>
+                    <button
+                      onClick={() => { setZoom(1); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Zoom to 100%</span>
+                      <span style={menuShortcutStyle}>⌘0</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* OBJECT CATEGORY */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{ ...menuItemStyle, background: activeSubmenu === 'object' ? '#363636' : 'transparent' }}
+                  onMouseEnter={() => setActiveSubmenu('object')}
+                >
+                  <span>Object</span>
+                  <ChevronRight size={14} color="#888888" />
+                </button>
+
+                {activeSubmenu === 'object' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -12,
+                      left: 232,
+                      width: 220,
+                      background: '#242424',
+                      border: '1px solid #363636',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
+                      padding: '8px 0',
+                      zIndex: 120,
+                    }}
+                  >
+                    <button
+                      onClick={() => { bringToFront(); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Bring to front</span>
+                      <span style={menuShortcutStyle}>⌘↑</span>
+                    </button>
+                    <button
+                      onClick={() => { sendToBack(); setShowMenu(false); }}
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Send to back</span>
+                      <span style={menuShortcutStyle}>⌘↓</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div style={separatorStyle} />
+
+              {/* PLUGINS & WIDGETS (GCP Cloud & AI Studio) */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{ ...menuItemStyle, background: activeSubmenu === 'plugins' ? '#363636' : 'transparent' }}
+                  onMouseEnter={() => setActiveSubmenu('plugins')}
+                >
+                  <span>Plugins & Cloud</span>
+                  <ChevronRight size={14} color="#888888" />
+                </button>
+                {activeSubmenu === 'plugins' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -12,
+                      left: 232,
+                      width: 240,
+                      background: '#242424',
+                      border: '1px solid #363636',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
+                      padding: '8px 0',
+                      zIndex: 120,
+                    }}
+                  >
+                    <div style={{ padding: '8px 16px', color: '#10B981', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Cloud size={16} />
+                      <span>GCP Cloud Run: {room.gcpStatus.toUpperCase()}</span>
+                    </div>
+                    <div style={separatorStyle} />
+                    <button
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Bloom AI Auto-Layout</span>
+                      <span style={menuShortcutStyle}>✨ Ready</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* PREFERENCES */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{ ...menuItemStyle, background: activeSubmenu === 'prefs' ? '#363636' : 'transparent' }}
+                  onMouseEnter={() => setActiveSubmenu('prefs')}
+                >
+                  <span>Preferences</span>
+                  <ChevronRight size={14} color="#888888" />
+                </button>
+                {activeSubmenu === 'prefs' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -12,
+                      left: 232,
+                      width: 230,
+                      background: '#242424',
+                      border: '1px solid #363636',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
+                      padding: '8px 0',
+                      zIndex: 120,
+                    }}
+                  >
+                    <button
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Theme Mode</span>
+                      <span style={menuShortcutStyle}>FigJam Light</span>
+                    </button>
+                    <button
+                      style={menuItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span>Snap to Objects</span>
+                      <span style={{ color: '#10B981', fontSize: '0.8rem', marginLeft: 16 }}>✓ Enabled</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div style={separatorStyle} />
+
+              {/* HELP AND ACCOUNT */}
+              <button
+                style={menuItemStyle}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#363636';
+                  setActiveSubmenu(null);
+                }}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                onClick={() => {
+                  alert('Bloom Studio Canvas v1.0.0\nEngine: React-Konva GPU + GCP WebSockets');
+                  setShowMenu(false);
+                }}
+              >
+                <span>Help and account</span>
+                <span style={menuShortcutStyle}>v1.0</span>
               </button>
             </div>
           )}
@@ -275,13 +642,13 @@ export const TopNavbar: React.FC = () => {
               autoFocus
               style={{
                 background: 'rgba(0,0,0,0.04)',
-                border: '1px solid var(--accent-primary)',
+                border: '1px solid #4F46E5',
                 borderRadius: 6,
                 padding: '3px 8px',
                 fontSize: '0.9rem',
                 fontWeight: 600,
-                fontFamily: 'Outfit',
-                color: 'var(--text-primary)',
+                fontFamily: 'Outfit, system-ui',
+                color: '#0F172A',
                 outline: 'none',
               }}
             />
@@ -295,8 +662,8 @@ export const TopNavbar: React.FC = () => {
                 borderRadius: 6,
                 fontSize: '0.9rem',
                 fontWeight: 600,
-                fontFamily: 'Outfit',
-                color: 'var(--text-primary)',
+                fontFamily: 'Outfit, system-ui',
+                color: '#0F172A',
                 cursor: 'pointer',
                 transition: 'background 0.15s',
               }}
@@ -310,7 +677,7 @@ export const TopNavbar: React.FC = () => {
         </div>
       </div>
 
-      {/* RIGHT FLOATING BAR: Multiplayer Profiles + Vibrant Share Button */}
+      {/* RIGHT FLOATING PILL: Multiplayer Avatars & Share Button */}
       <div
         style={{
           display: 'flex',
@@ -354,7 +721,7 @@ export const TopNavbar: React.FC = () => {
               width: 30,
               height: 30,
               borderRadius: '50%',
-              background: 'var(--accent-primary)',
+              background: '#4F46E5',
               border: '2px solid #FFF',
               display: 'flex',
               alignItems: 'center',
@@ -362,7 +729,7 @@ export const TopNavbar: React.FC = () => {
               fontSize: '0.75rem',
               fontWeight: 700,
               color: '#FFF',
-              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
               marginLeft: -6,
             }}
             title={`You (${currentUserName})`}
@@ -373,7 +740,7 @@ export const TopNavbar: React.FC = () => {
 
         <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
 
-        {/* Share Button (Vivid Violet, matching FigJam style) */}
+        {/* Share Button (Vivid Violet, matching FigJam aesthetic) */}
         <button
           onClick={handleShare}
           style={{
