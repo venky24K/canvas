@@ -108,6 +108,30 @@ class GcpFirestoreServiceClass {
     return null;
   }
 
+  // Retrieve all locally cached / offline boards for the workspace dashboard
+  public getAllBoards(): FirestoreBoardDocument[] {
+    const allBoards: FirestoreBoardDocument[] = [];
+    
+    this.localCache.forEach((board) => allBoards.push(board));
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('gcp_firestore_board_')) {
+        const boardId = key.replace('gcp_firestore_board_', '');
+        if (!this.localCache.has(boardId)) {
+          try {
+            const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+            this.localCache.set(boardId, parsed);
+            allBoards.push(parsed);
+          } catch (e) {}
+        }
+      }
+    }
+    
+    // Sort by most recently updated
+    return allBoards.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }
+
   // Generate signed asset URL for Google Cloud Storage (GCS) asset dropping
   public getGcsAssetBucketUrl(fileName: string): string {
     const bucket = firebaseConfig.storageBucket || 'bloom-studio-prod.appspot.com';

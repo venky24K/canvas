@@ -3,6 +3,25 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const Y = require('yjs');
+const nodemailer = require('nodemailer');
+
+let transporter;
+nodemailer.createTestAccount((err, account) => {
+  if (err) {
+    console.error('Failed to create a testing account. ' + err.message);
+    return;
+  }
+  console.log('✉️ [Ethereal Mock Email] Credentials generated!');
+  transporter = nodemailer.createTransport({
+    host: account.smtp.host,
+    port: account.smtp.port,
+    secure: account.smtp.secure,
+    auth: {
+      user: account.user,
+      pass: account.pass,
+    },
+  });
+});
 
 const app = express();
 app.use(cors());
@@ -43,21 +62,98 @@ app.post('/api/gcp/firestore/save', (req, res) => {
     return res.status(400).json({ error: 'Missing boardId parameter for Firestore persistence' });
   }
   
+  const existing = roomDocs.get(boardId);
   roomDocs.set(boardId, {
     title: title || 'Untitled Board',
     nodes: nodes || {},
     updatedAt: new Date().toISOString(),
     ownerUid: ownerUid || 'gcp-sys',
+    acl: existing ? existing.acl : [], // List of { email, role, status }
   });
 
   console.log(`☁️ [GCP Cloud Run Engine] Saved board [${boardId}] revision to Firestore memory proxy (${Object.keys(nodes || {}).length} items).`);
   res.status(200).json({ status: 'SUCCESS', boardId, bucketUri: `gs://bloom-studio-assets-prod/${boardId}.json` });
 });
 
-io.on('connection', (socket) => {
-  const { userId = `peer-${socket.id.substring(0, 5)}`, userName = 'Team Member', color = '#8B5CF6', room = 'bloom-gcp-prod-room' } = socket.handshake.query;
+app.post('/api/rooms/:roomId/invite', async (req, res) => {
+  const { roomId } = req.params;
+  const { emails, role, inviterName } = req.body;
+
+  if (!roomDocs.has(roomId)) {
+    roomDocs.set(roomId, { title: roomId, nodes: {}, updatedAt: new Date().toISOString(), acl: [] });
+  }
   
-  console.log(`🔌 [GCP Cloud Run Socket] Peer connected: "${userName}" (${userId}) to collaborative workspace [${room}]`);
+  const room = roomDocs.get(roomId);
+  if (!room.acl) room.acl = [];
+
+  const invitations = [];
+
+  for (const email of emails) {
+    const existing = room.acl.find(m => m.email === email);
+    if (existing) {
+      existing.role = role;
+    } else {
+      room.acl.push({ email, role, status: 'pending' });
+    }
+    
+    // Dispatch mock email
+    if (transporter) {
+      const inviteUrl = `http://localhost:5173/?room=${roomId}`;
+      const mailOptions = {
+        from: '"Bloom Workspace Notification" <noreply@bloom.design>',
+        to: email,
+        subject: `${inviterName || 'A teammate'} invited you to collaborate in Bloom`,
+        text: `You have been invited to join a collaborative workspace as a ${role}.\n\nJoin the workspace here: ${inviteUrl}`,
+        html: `<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                 <h2 style="color: #0f172a;">You're invited to collaborate!</h2>
+                 <p style="color: #475569;">${inviterName || 'A teammate'} has invited you to join a workspace as a <strong>${role}</strong>.</p>
+                 <a href="${inviteUrl}" style="display: inline-block; background: #4f46e5; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; margin-top: 15px;">Open Workspace</a>
+               </div>`
+      };
+      
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`📧 [Mock Email Sent to ${email}] Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+      } catch (err) {
+        console.error('Email send failed', err);
+      }
+    }
+    
+    invitations.push({ email, role, status: 'pending' });
+  }
+
+  // Notify any active clients in this room that the ACL updated!
+  io.to(roomId).emit('acl-updated', room.acl);
+
+  res.status(200).json({ success: true, invites: invitations });
+});
+
+app.get('/api/rooms/:roomId/members', (req, res) => {
+  const { roomId } = req.params;
+  const room = roomDocs.get(roomId);
+  res.status(200).json({ members: room?.acl || [] });
+});
+
+io.on('connection', (socket) => {
+  const { userId = `peer-${socket.id.substring(0, 5)}`, userName = 'Team Member', userEmail = '', color = '#8B5CF6', room = 'bloom-gcp-prod-room' } = socket.handshake.query;
+  
+  socket.userRole = 'editor'; // Default role unless restricted by ACL
+
+  if (roomDocs.has(room)) {
+    const doc = roomDocs.get(room);
+    if (doc.acl && doc.acl.length > 0) {
+      const member = doc.acl.find(m => m.email === userEmail);
+      if (member) {
+        socket.userRole = member.role;
+        member.status = 'accepted';
+        io.to(room).emit('acl-updated', doc.acl);
+      } else if (doc.ownerUid !== userEmail) {
+        socket.userRole = 'viewer'; // If restricted board, default unknown guests to viewer
+      }
+    }
+  }
+
+  console.log(`🔌 [GCP Cloud Run Socket] Peer connected: "${userName}" (${userId}) to collaborative workspace [${room}] as [${socket.userRole.toUpperCase()}]`);
 
   socket.join(room);
   activePeers.set(socket.id, { userId, userName, color, room });
@@ -90,6 +186,7 @@ io.on('connection', (socket) => {
 
   // 5. Node Addition / Shape Creation & Freehand Sketch Sync
   socket.on('node-added', (node) => {
+    if (socket.userRole === 'viewer') return;
     if (!node || !node.id) return;
     const doc = roomDocs.get(room);
     if (doc) {
@@ -101,6 +198,7 @@ io.on('connection', (socket) => {
 
   // 6. Node Updates (Dragging, Resizing, Styling Swatches, Freehand Points)
   socket.on('node-updated', ({ id, updates }) => {
+    if (socket.userRole === 'viewer') return;
     if (!id) return;
     const doc = roomDocs.get(room);
     if (doc && doc.nodes[id]) {
@@ -112,6 +210,7 @@ io.on('connection', (socket) => {
 
   // 7. Node Deletion (Eraser Sweep, Delete Selected)
   socket.on('nodes-deleted', ({ ids }) => {
+    if (socket.userRole === 'viewer') return;
     if (!Array.isArray(ids)) return;
     const doc = roomDocs.get(room);
     if (doc) {

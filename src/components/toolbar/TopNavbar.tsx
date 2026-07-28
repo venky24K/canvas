@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { GcpProfileModal } from '../cloud/GcpProfileModal';
 import { ShareBoardModal } from '../share/ShareBoardModal';
 import {
   ChevronDown,
@@ -34,7 +33,6 @@ export const TopNavbar: React.FC = () => {
   } = useCanvasStore();
 
   const [showMenu, setShowMenu] = useState(false);
-  const [showGcpModal, setShowGcpModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -702,7 +700,6 @@ export const TopNavbar: React.FC = () => {
             </div>
           ))}
           <div
-            onClick={() => setShowGcpModal(true)}
             style={{
               width: 30,
               height: 30,
@@ -717,11 +714,11 @@ export const TopNavbar: React.FC = () => {
               color: '#FFF',
               boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
               marginLeft: -6,
-              cursor: 'pointer',
+              cursor: 'default',
             }}
-            title={`You (${currentUserName}) - Click to open Profile & Account Settings`}
+            title={`You (${currentUserName})`}
           >
-            You
+            {(currentUserName || 'Venky').charAt(0).toUpperCase()}
           </div>
         </div>
 
@@ -753,8 +750,6 @@ export const TopNavbar: React.FC = () => {
         </button>
       </div>
 
-      {/* GCP Collaborative Identity Modal */}
-      <GcpProfileModal isOpen={showGcpModal} onClose={() => setShowGcpModal(false)} />
       {/* Share Board Dialog Modal */}
       <ShareBoardModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} />
     </div>

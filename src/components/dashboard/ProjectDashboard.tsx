@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
 import { GcpAuthService } from '../../cloud/GcpAuthService';
+import { GcpFirestoreService, type FirestoreBoardDocument } from '../../cloud/GcpFirestoreService';
 import {
   Plus,
   Clock,
@@ -22,15 +23,22 @@ export const ProjectDashboard: React.FC = () => {
   const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [boardDocs, setBoardDocs] = useState<FirestoreBoardDocument[]>([]);
 
-  const boards: Array<{
-    id: string;
-    title: string;
-    edited: string;
-    avatars: string[];
-    extraAvatars?: string | null;
-    type: string;
-  }> = [];
+  useEffect(() => {
+    setBoardDocs(GcpFirestoreService.getAllBoards());
+  }, []);
+
+  const boards = boardDocs.map((doc) => {
+    const isNew = new Date().getTime() - new Date(doc.updatedAt).getTime() < 1000 * 60 * 60 * 24;
+    return {
+      id: doc.boardId,
+      title: doc.title,
+      edited: isNew ? 'Edited recently' : `Edited ${new Date(doc.updatedAt).toLocaleDateString()}`,
+      avatars: ['#4F46E5'],
+      type: doc.nodeCount > 0 ? 'flow' : 'roadmap',
+    };
+  });
 
   const filteredBoards = boards.filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -604,13 +612,15 @@ export const ProjectDashboard: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.6rem',
+                          fontSize: '0.65rem',
                           color: '#FFF',
                           fontWeight: 700,
                           marginLeft: idx > 0 ? -6 : 0,
                           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                         }}
-                      />
+                      >
+                        V
+                      </div>
                     ))}
                     {board.extraAvatars && (
                       <div

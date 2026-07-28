@@ -44,6 +44,7 @@ export const useGcpSync = () => {
         query: {
           userId: currentUserId,
           userName: currentUserName,
+          userEmail: GcpAuthService.currentUser?.email || '',
           color: currentUserColor,
           room: activeRoomId,
         },

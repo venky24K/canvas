@@ -11,8 +11,9 @@ interface ShareBoardModalProps {
 interface AccessMember {
   email: string;
   name: string;
-  role: 'can view' | 'can edit';
+  role: 'viewer' | 'editor';
   avatarColor: string;
+  status?: 'pending' | 'accepted';
 }
 
 export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClose }) => {
@@ -21,10 +22,26 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
   const [copied, setCopied] = useState(false);
   const [anyoneRole, setAnyoneRole] = useState<'can view' | 'can edit' | 'no access'>('can view');
   
-  // List of invited members to make the modal interactive and functional
-  const [invitedMembers, setInvitedMembers] = useState<AccessMember[]>([]);
-
-  if (!isOpen) return null;
+  // Fetch real members from backend on open
+  useEffect(() => {
+    if (isOpen) {
+      const roomId = boardTitle ? boardTitle.toLowerCase().replace(/\s+/g, '-') : 'bloom-gcp-prod-room';
+      fetch(`http://localhost:4000/api/rooms/${roomId}/members`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.members) {
+            setInvitedMembers(data.members.map((m: any, i: number) => ({
+              email: m.email,
+              name: m.email.split('@')[0],
+              role: m.role,
+              status: m.status,
+              avatarColor: ['#EC4899', '#3B82F6', '#10B981', '#F59E0B'][i % 4],
+            })));
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isOpen, boardTitle]);
 
   const handleCopyLink = () => {
     const url = new URL(window.location.href);
@@ -35,7 +52,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleInvite = (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
 
@@ -44,15 +61,30 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
       .map((e) => e.trim())
       .filter((e) => e.length > 0);
 
-    const newMembers: AccessMember[] = emails.map((email, i) => ({
-      email,
-      name: email.split('@')[0],
-      role: 'can edit',
-      avatarColor: ['#EC4899', '#3B82F6', '#10B981', '#F59E0B'][i % 4],
-    }));
-
-    setInvitedMembers((prev) => [...prev, ...newMembers]);
-    setInviteEmail('');
+    const roomId = boardTitle ? boardTitle.toLowerCase().replace(/\s+/g, '-') : 'bloom-gcp-prod-room';
+    
+    try {
+      const res = await fetch(`http://localhost:4000/api/rooms/${roomId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails, role: 'editor', inviterName: currentUserName }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        const newMembers: AccessMember[] = emails.map((email, i) => ({
+          email,
+          name: email.split('@')[0],
+          role: 'editor',
+          status: 'pending',
+          avatarColor: ['#EC4899', '#3B82F6', '#10B981', '#F59E0B'][i % 4],
+        }));
+        setInvitedMembers((prev) => [...prev, ...newMembers]);
+        setInviteEmail('');
+      }
+    } catch (err) {
+      console.error('Failed to invite members:', err);
+    }
   };
 
   const toggleAnyoneRole = () => {
@@ -296,20 +328,17 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
                     width: 32,
                     height: 32,
                     borderRadius: '50%',
-                    overflow: 'hidden',
                     background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    color: '#FFFFFF',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
                     flexShrink: 0,
                   }}
                 >
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80"
-                    alt={currentUserName}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => (e.currentTarget.style.display = 'none')}
-                  />
+                  {(currentUserName || 'venky').charAt(0).toUpperCase()}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
@@ -361,10 +390,15 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
                   >
                     {member.name.charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>
-                      {member.email}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
+                      {member.name}
                     </span>
+                    {member.status === 'pending' && (
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', background: '#FEF3C7', color: '#D97706', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Pending
+                      </span>
+                    )}
                   </div>
                 </div>
 
