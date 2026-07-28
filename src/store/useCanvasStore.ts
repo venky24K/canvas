@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import type { CanvasNode, ToolType, GridType, CollaborativeCursor, RoomState, StyleProperties } from '../types/canvas';
 
+interface HistorySnapshot {
+  nodes: Record<string, CanvasNode>;
+  nodeIds: string[];
+}
+
 interface CanvasState {
   // Application View Mode (Dashboard Workspace vs Interactive Drawing Studio)
   activeView: 'dashboard' | 'canvas';
@@ -14,6 +19,13 @@ interface CanvasState {
   nodeIds: string[]; // Ordered by zIndex
   selectedIds: string[];
   activeTool: ToolType;
+  
+  // Time-Travel History Stack (Undo / Redo)
+  history: HistorySnapshot[];
+  future: HistorySnapshot[];
+  undo: () => void;
+  redo: () => void;
+  recordSnapshot: () => void;
   
   // Viewport Settings
   zoom: number;
@@ -41,7 +53,7 @@ interface CanvasState {
   
   // Node Manipulation Actions
   addNode: (node: CanvasNode) => void;
-  updateNode: (id: string, updates: Partial<CanvasNode>) => void;
+  updateNode: (id: string, updates: Partial<CanvasNode>, record?: boolean) => void;
   updateSelectedNodes: (updates: Partial<CanvasNode>) => void;
   deleteSelected: () => void;
   setSelectedIds: (ids: string[]) => void;
@@ -65,7 +77,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   boardTitle: 'Product Roadmap Q3',
   setActiveView: (view) => set({ activeView: view }),
   setBoardTitle: (title) => set({ boardTitle: title }),
-  openBoard: (title, nodesList = []) => set((state) => {
+  openBoard: (title, nodesList = []) => set(() => {
     const nodesMap: Record<string, CanvasNode> = {};
     const ids: string[] = [];
     nodesList.forEach((n) => {
@@ -78,16 +90,21 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       nodes: nodesMap,
       nodeIds: ids,
       selectedIds: [],
+      history: [],
+      future: [],
       zoom: 1,
       pan: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 },
     };
   }),
 
-  // Initialize with completely clean, empty canvas (No mock data!)
+  // Initialize clean, empty canvas studio
   nodes: {},
   nodeIds: [],
   selectedIds: [],
   activeTool: 'select',
+  
+  history: [],
+  future: [],
   
   zoom: 1,
   pan: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 },
@@ -109,7 +126,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     fontFamily: 'Inter',
   },
 
-  // No simulated mock cursors; only real WebSocket peers from GCP Cloud Run appear
   cursors: {},
   currentUserId: `usr-${Math.random().toString(36).substring(2, 8)}`,
   currentUserName: 'venky24K',
@@ -122,6 +138,48 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     onlineCount: 1,
     presenterId: null,
   },
+
+  // HISTORY RECORDING & TIME TRAVEL ACTIONS
+  recordSnapshot: () => set((state) => {
+    const currentSnapshot = {
+      nodes: { ...state.nodes },
+      nodeIds: [...state.nodeIds],
+    };
+    return {
+      history: [...state.history, currentSnapshot].slice(-30), // Retain up to 30 history checkpoints
+      future: [],
+    };
+  }),
+
+  undo: () => set((state) => {
+    if (state.history.length === 0) return state;
+    const previous = state.history[state.history.length - 1];
+    const newHistory = state.history.slice(0, -1);
+    const currentSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+    
+    return {
+      nodes: previous.nodes,
+      nodeIds: previous.nodeIds,
+      selectedIds: [],
+      history: newHistory,
+      future: [currentSnapshot, ...state.future].slice(0, 30),
+    };
+  }),
+
+  redo: () => set((state) => {
+    if (state.future.length === 0) return state;
+    const next = state.future[0];
+    const newFuture = state.future.slice(1);
+    const currentSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+    
+    return {
+      nodes: next.nodes,
+      nodeIds: next.nodeIds,
+      selectedIds: [],
+      history: [...state.history, currentSnapshot].slice(-30),
+      future: newFuture,
+    };
+  }),
 
   setTool: (tool) => set({ activeTool: tool, selectedIds: tool !== 'select' ? [] : get().selectedIds }),
   
@@ -143,39 +201,65 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     defaultStyles: { ...state.defaultStyles, ...updates }
   })),
 
-  addNode: (node) => set((state) => ({
-    nodes: { ...state.nodes, [node.id]: node },
-    nodeIds: [...state.nodeIds, node.id],
-    selectedIds: state.activeTool === 'select' ? [node.id] : state.selectedIds,
-  })),
+  addNode: (node) => set((state) => {
+    const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+    return {
+      nodes: { ...state.nodes, [node.id]: node },
+      nodeIds: [...state.nodeIds, node.id],
+      selectedIds: state.activeTool === 'select' ? [node.id] : state.selectedIds,
+      history: [...state.history, prevSnapshot].slice(-30),
+      future: [],
+    };
+  }),
   
-  updateNode: (id, updates) => set((state) => {
+  updateNode: (id, updates, record = false) => set((state) => {
     const existing = state.nodes[id];
     if (!existing) return state;
-    return {
-      nodes: {
-        ...state.nodes,
-        [id]: { ...existing, ...updates },
-      },
+    const nextNodes = {
+      ...state.nodes,
+      [id]: { ...existing, ...updates },
     };
+    if (record) {
+      const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+      return {
+        nodes: nextNodes,
+        history: [...state.history, prevSnapshot].slice(-30),
+        future: [],
+      };
+    }
+    return { nodes: nextNodes };
   }),
 
   updateSelectedNodes: (updates) => set((state) => {
+    if (state.selectedIds.length === 0) return state;
+    const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
     const nextNodes = { ...state.nodes };
     state.selectedIds.forEach((id) => {
       if (nextNodes[id]) {
         nextNodes[id] = { ...nextNodes[id], ...updates } as CanvasNode;
       }
     });
-    return { nodes: nextNodes };
+    return {
+      nodes: nextNodes,
+      history: [...state.history, prevSnapshot].slice(-30),
+      future: [],
+    };
   }),
   
   deleteSelected: () => set((state) => {
+    if (state.selectedIds.length === 0) return state;
+    const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
     const nextNodes = { ...state.nodes };
     const toDelete = new Set(state.selectedIds);
     toDelete.forEach((id) => delete nextNodes[id]);
     const nextIds = state.nodeIds.filter((id) => !toDelete.has(id));
-    return { nodes: nextNodes, nodeIds: nextIds, selectedIds: [] };
+    return {
+      nodes: nextNodes,
+      nodeIds: nextIds,
+      selectedIds: [],
+      history: [...state.history, prevSnapshot].slice(-30),
+      future: [],
+    };
   }),
   
   setSelectedIds: (ids) => set({ selectedIds: ids }),
@@ -183,17 +267,28 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   bringToFront: () => set((state) => {
     const unselected = state.nodeIds.filter((id) => !state.selectedIds.includes(id));
     const selected = state.nodeIds.filter((id) => state.selectedIds.includes(id));
-    return { nodeIds: [...unselected, ...selected] };
+    const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+    return {
+      nodeIds: [...unselected, ...selected],
+      history: [...state.history, prevSnapshot].slice(-30),
+      future: [],
+    };
   }),
   
   sendToBack: () => set((state) => {
     const unselected = state.nodeIds.filter((id) => !state.selectedIds.includes(id));
     const selected = state.nodeIds.filter((id) => state.selectedIds.includes(id));
-    return { nodeIds: [...selected, ...unselected] };
+    const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+    return {
+      nodeIds: [...selected, ...unselected],
+      history: [...state.history, prevSnapshot].slice(-30),
+      future: [],
+    };
   }),
   
   duplicateSelected: () => set((state) => {
     if (state.selectedIds.length === 0) return state;
+    const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
     const nextNodes = { ...state.nodes };
     const addedIds: string[] = [];
     
@@ -214,6 +309,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       nodes: nextNodes,
       nodeIds: [...state.nodeIds, ...addedIds],
       selectedIds: addedIds,
+      history: [...state.history, prevSnapshot].slice(-30),
+      future: [],
     };
   }),
 
@@ -238,7 +335,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       nodesMap[n.id] = n;
       ids.push(n.id);
     });
-    return { nodes: nodesMap, nodeIds: ids, selectedIds: [] };
+    return { nodes: nodesMap, nodeIds: ids, selectedIds: [], history: [], future: [] };
   }),
 
   exportSceneJson: () => {

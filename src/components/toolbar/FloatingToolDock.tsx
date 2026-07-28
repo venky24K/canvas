@@ -18,6 +18,8 @@ import {
   Copy as DuplicateIcon,
   ArrowUp,
   ArrowDown,
+  Undo2 as UndoIcon,
+  Redo2 as RedoIcon,
 } from 'lucide-react';
 
 export const FloatingToolDock: React.FC = () => {
@@ -26,6 +28,10 @@ export const FloatingToolDock: React.FC = () => {
     selectedIds,
     nodes,
     defaultStyles,
+    history,
+    future,
+    undo,
+    redo,
     setTool,
     updateSelectedNodes,
     updateDefaultStyles,
@@ -35,7 +41,7 @@ export const FloatingToolDock: React.FC = () => {
     duplicateSelected,
   } = useCanvasStore();
 
-  // 1. GLOBAL KEYBOARD SHORTCUT LISTENER (Desktop FigJam UX)
+  // 1. GLOBAL KEYBOARD SHORTCUT LISTENER (Desktop FigJam UX + Undo/Redo)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if typing inside an input, textarea, or contentEditable element
@@ -44,6 +50,24 @@ export const FloatingToolDock: React.FC = () => {
       }
 
       const key = e.key.toLowerCase();
+
+      // Undo / Redo Shortcuts (Cmd+Z / Ctrl+Z / Cmd+Shift+Z)
+      if ((e.metaKey || e.ctrlKey) && key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && key === 'y') {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      // Tool and Layer Action Shortcuts
       if (key === 'v') setTool('select');
       else if (key === 'h') setTool('hand');
       else if (key === 'f') setTool('artboard');
@@ -70,7 +94,7 @@ export const FloatingToolDock: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIds, setTool, deleteSelected, duplicateSelected]);
+  }, [selectedIds, setTool, deleteSelected, duplicateSelected, undo, redo]);
 
   // Structured Tool Pods matching FigJam aesthetic
   const tools: { id: ToolType; label: string; icon: React.ReactNode; badge?: string; group: number }[] = [
@@ -124,6 +148,9 @@ export const FloatingToolDock: React.FC = () => {
 
   const showQuickPalette = selectedIds.length > 0 || ['freehand', 'highlighter', 'rectangle', 'ellipse', 'sticky', 'arrow', 'text'].includes(activeTool);
   const showThicknessPicker = selectedIds.length > 0 || ['freehand', 'highlighter', 'rectangle', 'ellipse', 'arrow'].includes(activeTool);
+
+  const canUndo = history.length > 0;
+  const canRedo = future.length > 0;
 
   return (
     <>
@@ -211,13 +238,62 @@ export const FloatingToolDock: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '6px 12px',
+          padding: '6px 14px',
           background: '#FFFFFF',
           borderRadius: 32,
           border: '1px solid rgba(0, 0, 0, 0.08)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
         }}
       >
+        {/* Pod 0: UNDO & REDO CONTROLS */}
+        <button
+          onClick={undo}
+          disabled={!canUndo}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 17,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            color: canUndo ? '#0F172A' : '#CBD5E1',
+            cursor: canUndo ? 'pointer' : 'not-allowed',
+            transition: 'background 0.15s',
+          }}
+          title="Undo (Cmd+Z)"
+          onMouseEnter={(e) => canUndo && (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+          onMouseLeave={(e) => canUndo && (e.currentTarget.style.background = 'transparent')}
+        >
+          <UndoIcon size={18} />
+        </button>
+
+        <button
+          onClick={redo}
+          disabled={!canRedo}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 17,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            color: canRedo ? '#0F172A' : '#CBD5E1',
+            cursor: canRedo ? 'pointer' : 'not-allowed',
+            transition: 'background 0.15s',
+          }}
+          title="Redo (Cmd+Shift+Z)"
+          onMouseEnter={(e) => canRedo && (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+          onMouseLeave={(e) => canRedo && (e.currentTarget.style.background = 'transparent')}
+        >
+          <RedoIcon size={18} />
+        </button>
+
+        <div style={{ width: 1, height: 22, background: 'rgba(0, 0, 0, 0.08)', margin: '0 2px' }} />
+
         {tools.map((t, index) => (
           <React.Fragment key={t.id}>
             {/* Insert sleek vertical dividers between functional pods */}

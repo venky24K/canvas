@@ -28,6 +28,7 @@ export const InfiniteStage: React.FC = () => {
     addNode,
     updateNode,
     deleteSelected,
+    recordSnapshot,
   } = useCanvasStore();
 
   useEffect(() => {
