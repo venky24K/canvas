@@ -98,7 +98,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     fillColor: '#EEF2FF',
     fillOpacity: 0.85,
     strokeColor: '#6366F1',
-    strokeWidth: 2,
+    strokeWidth: 4,
     cornerRadius: 16,
     shadowColor: 'rgba(0, 0, 0, 0.1)',
     shadowBlur: 20,

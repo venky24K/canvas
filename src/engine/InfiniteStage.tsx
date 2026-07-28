@@ -27,6 +27,7 @@ export const InfiniteStage: React.FC = () => {
     setSelectedIds,
     addNode,
     updateNode,
+    deleteSelected,
   } = useCanvasStore();
 
   useEffect(() => {
@@ -81,6 +82,9 @@ export const InfiniteStage: React.FC = () => {
       const strokeId = `freehand-${Date.now()}`;
       setCurrentStrokeId(strokeId);
       
+      const chosenWidth = defaultStyles.strokeWidth || 4;
+      const chosenColor = defaultStyles.fillColor === '#EEF2FF' ? '#6366F1' : (defaultStyles.fillColor || '#6366F1');
+
       const newStroke: FreehandNode = {
         id: strokeId,
         type: 'freehand',
@@ -89,18 +93,88 @@ export const InfiniteStage: React.FC = () => {
         width: 100,
         height: 100,
         rotation: 0,
-        opacity: activeTool === 'highlighter' ? 0.5 : 1,
+        opacity: activeTool === 'highlighter' ? 0.45 : 1,
         zIndex: nodeIds.length + 1,
         isLocked: false,
         points: [[pointer.x, pointer.y, 0.5]],
         smoothing: 0.5,
-        fillColor: activeTool === 'highlighter' ? '#FDE047' : '#EC4899',
+        fillColor: activeTool === 'highlighter' ? '#FDE047' : chosenColor,
         fillOpacity: 1,
-        strokeColor: activeTool === 'highlighter' ? '#FDE047' : '#EC4899',
-        strokeWidth: activeTool === 'highlighter' ? 24 : 6,
+        strokeColor: activeTool === 'highlighter' ? '#FDE047' : chosenColor,
+        strokeWidth: activeTool === 'highlighter' ? Math.max(20, chosenWidth * 2) : chosenWidth,
         isHighlighter: activeTool === 'highlighter',
       };
       addNode(newStroke);
+      return;
+    }
+
+    if (activeTool === 'artboard') {
+      const newArtboard: any = {
+        id: `artboard-${Date.now()}`,
+        type: 'artboard',
+        deviceLabel: 'Desktop Frame (1440 × 900)',
+        preset: 'macbook',
+        clipChildren: false,
+        x: pointer.x - 320,
+        y: pointer.y - 200,
+        width: 640,
+        height: 400,
+        rotation: 0,
+        opacity: 1,
+        zIndex: 0, // Frame background
+        isLocked: false,
+        fillColor: '#FFFFFF',
+        strokeColor: '#CBD5E1',
+        strokeWidth: 2,
+        cornerRadius: 16,
+      };
+      addNode(newArtboard);
+      return;
+    }
+
+    if (activeTool === 'text') {
+      const newText: any = {
+        id: `text-${Date.now()}`,
+        type: 'text',
+        text: '✨ Collaborative Text\nClick to select and edit styling.',
+        fontSize: 24,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        textAlign: 'left',
+        lineHeight: 1.3,
+        x: pointer.x - 80,
+        y: pointer.y - 20,
+        width: 320,
+        height: 80,
+        rotation: 0,
+        opacity: 1,
+        zIndex: nodeIds.length + 1,
+        isLocked: false,
+        fillColor: defaultStyles.fillColor === '#EEF2FF' ? '#0F172A' : (defaultStyles.fillColor || '#0F172A'),
+      };
+      addNode(newText);
+      return;
+    }
+
+    if (activeTool === 'arrow') {
+      const newArrow: any = {
+        id: `arrow-${Date.now()}`,
+        type: 'arrow',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        rotation: 0,
+        opacity: 1,
+        zIndex: nodeIds.length + 1,
+        isLocked: false,
+        startPoint: { x: pointer.x - 120, y: pointer.y },
+        endPoint: { x: pointer.x + 120, y: pointer.y - 40 },
+        arrowType: 'curved',
+        strokeColor: defaultStyles.fillColor === '#EEF2FF' ? '#0EA5E9' : (defaultStyles.fillColor || '#0EA5E9'),
+        strokeWidth: Math.max(3, defaultStyles.strokeWidth || 4),
+      };
+      addNode(newArrow);
       return;
     }
 
@@ -108,16 +182,17 @@ export const InfiniteStage: React.FC = () => {
       const newShape: ShapeNode = {
         id: `${activeTool}-${Date.now()}`,
         type: activeTool,
-        x: pointer.x - 80,
-        y: pointer.y - 50,
-        width: 160,
-        height: 100,
+        x: pointer.x - 90,
+        y: pointer.y - 60,
+        width: 180,
+        height: 120,
         rotation: 0,
         opacity: 1,
         zIndex: nodeIds.length + 1,
         isLocked: false,
         name: `${activeTool === 'rectangle' ? 'UI Box Container' : 'Circular Badge'}`,
         ...defaultStyles,
+        strokeWidth: defaultStyles.strokeWidth || 4,
       };
       addNode(newShape);
       return;
@@ -238,6 +313,11 @@ export const InfiniteStage: React.FC = () => {
                 isSelected={selectedIds.includes(id)}
                 onSelect={(selectedId, e) => {
                   e.cancelBubble = true;
+                  if (activeTool === 'eraser') {
+                    setSelectedIds([selectedId]);
+                    deleteSelected();
+                    return;
+                  }
                   if (activeTool === 'select') {
                     setSelectedIds([selectedId]);
                   }

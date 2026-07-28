@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { ChevronDown, Download, Upload, Grid, Cloud, Check, Share2, FileText, Sparkles, Wifi, ArrowLeft, Layout } from 'lucide-react';
+import { ChevronDown, Download, Upload, Grid, Cloud, Check, Wifi, ArrowLeft } from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
   const {
