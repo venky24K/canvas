@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
+import { GcpProfileModal } from '../cloud/GcpProfileModal';
 import {
   ChevronDown,
   ChevronRight,
@@ -30,6 +31,7 @@ export const TopNavbar: React.FC = () => {
     gridType,
     cursors,
     currentUserName,
+    currentUserColor,
     boardTitle,
     nodeIds,
     setBoardTitle,
@@ -48,6 +50,7 @@ export const TopNavbar: React.FC = () => {
   } = useCanvasStore();
 
   const [showMenu, setShowMenu] = useState(false);
+  const [showGcpModal, setShowGcpModal] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -313,7 +316,7 @@ export const TopNavbar: React.FC = () => {
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span>Save to GCP Cloud</span>
+                      <span>Save to Cloud Storage</span>
                       <span style={menuShortcutStyle}>☁ Connected</span>
                     </button>
                   </div>
@@ -546,7 +549,7 @@ export const TopNavbar: React.FC = () => {
                   >
                     <div style={{ padding: '8px 16px', color: '#10B981', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Cloud size={16} />
-                      <span>GCP Cloud Run: {room.gcpStatus.toUpperCase()}</span>
+                      <span>Cloud Sync: {room.gcpStatus.toUpperCase()}</span>
                     </div>
                     <div style={separatorStyle} />
                     <button
@@ -616,7 +619,7 @@ export const TopNavbar: React.FC = () => {
                 }}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 onClick={() => {
-                  alert('Bloom Studio Canvas v1.0.0\nEngine: React-Konva GPU + GCP WebSockets');
+                  alert('Bloom Studio Canvas v1.0.0\nEngine: React-Konva GPU + Real-time WebSockets');
                   setShowMenu(false);
                 }}
               >
@@ -717,11 +720,12 @@ export const TopNavbar: React.FC = () => {
             </div>
           ))}
           <div
+            onClick={() => setShowGcpModal(true)}
             style={{
               width: 30,
               height: 30,
               borderRadius: '50%',
-              background: '#4F46E5',
+              background: currentUserColor || '#4F46E5',
               border: '2px solid #FFF',
               display: 'flex',
               alignItems: 'center',
@@ -731,8 +735,9 @@ export const TopNavbar: React.FC = () => {
               color: '#FFF',
               boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
               marginLeft: -6,
+              cursor: 'pointer',
             }}
-            title={`You (${currentUserName})`}
+            title={`You (${currentUserName}) - Click to open Profile & Account Settings`}
           >
             You
           </div>
@@ -772,6 +777,9 @@ export const TopNavbar: React.FC = () => {
           )}
         </button>
       </div>
+
+      {/* GCP Collaborative Identity Modal */}
+      <GcpProfileModal isOpen={showGcpModal} onClose={() => setShowGcpModal(false)} />
     </div>
   );
 };

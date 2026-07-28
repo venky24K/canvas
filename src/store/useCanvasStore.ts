@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { CanvasNode, ToolType, GridType, CollaborativeCursor, RoomState, StyleProperties } from '../types/canvas';
+import { transmitNodeAdded, transmitNodeUpdated, transmitNodesDeleted } from '../collaboration/gcpSocketClient';
+import { GcpFirestoreService } from '../cloud/GcpFirestoreService';
 
 interface HistorySnapshot {
   nodes: Record<string, CanvasNode>;
@@ -7,10 +9,10 @@ interface HistorySnapshot {
 }
 
 interface CanvasState {
-  // Application View Mode (Dashboard Workspace vs Interactive Drawing Studio)
-  activeView: 'dashboard' | 'canvas';
+  // Application View Mode (Login Auth Portal vs Dashboard Workspace vs Interactive Drawing Studio)
+  activeView: 'login' | 'dashboard' | 'canvas';
   boardTitle: string;
-  setActiveView: (view: 'dashboard' | 'canvas') => void;
+  setActiveView: (view: 'login' | 'dashboard' | 'canvas') => void;
   setBoardTitle: (title: string) => void;
   openBoard: (title: string, nodes?: CanvasNode[]) => void;
 
@@ -65,6 +67,12 @@ interface CanvasState {
   updateRemoteCursor: (cursor: CollaborativeCursor) => void;
   removeRemoteCursor: (userId: string) => void;
   setRoomStatus: (status: Partial<RoomState>) => void;
+  setUserIdentity: (uid: string, name: string, color: string) => void;
+  
+  // Remote Peer Socket Merging (Without local re-broadcasting)
+  mergeRemoteNode: (node: CanvasNode) => void;
+  mergeRemoteNodeUpdate: (id: string, updates: Partial<CanvasNode>) => void;
+  mergeRemoteDeletion: (ids: string[]) => void;
   
   // Board Persistence & Export
   loadScene: (nodes: CanvasNode[]) => void;
@@ -72,8 +80,8 @@ interface CanvasState {
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
-  // Default to Main Workspace Project Dashboard when application loads
-  activeView: 'dashboard',
+  // Default to stunning Glassmorphic Login Portal when application loads
+  activeView: 'login',
   boardTitle: 'Product Roadmap Q3',
   setActiveView: (view) => set({ activeView: view }),
   setBoardTitle: (title) => set({ boardTitle: title }),
@@ -127,9 +135,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   cursors: {},
-  currentUserId: `usr-${Math.random().toString(36).substring(2, 8)}`,
-  currentUserName: 'venky24K',
-  currentUserColor: '#6366F1',
+  currentUserId: 'gcp-usr-venky',
+  currentUserName: 'Venky (Lead Owner)',
+  currentUserColor: '#4F46E5',
   room: {
     roomId: 'studio-gcp-prod-room',
     roomName: 'Bloom Studio Workspace',
@@ -139,6 +147,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     presenterId: null,
   },
 
+  setUserIdentity: (uid, name, color) => set({
+    currentUserId: uid,
+    currentUserName: name,
+    currentUserColor: color,
+  }),
+
   // HISTORY RECORDING & TIME TRAVEL ACTIONS
   recordSnapshot: () => set((state) => {
     const currentSnapshot = {
@@ -146,7 +160,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       nodeIds: [...state.nodeIds],
     };
     return {
-      history: [...state.history, currentSnapshot].slice(-30), // Retain up to 30 history checkpoints
+      history: [...state.history, currentSnapshot].slice(-30),
       future: [],
     };
   }),
@@ -202,9 +216,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   })),
 
   addNode: (node) => set((state) => {
+    transmitNodeAdded(node);
     const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
+    const nextNodes = { ...state.nodes, [node.id]: node };
+    GcpFirestoreService.saveBoardSnapshot(state.boardTitle, state.boardTitle, Object.values(nextNodes), state.currentUserId);
     return {
-      nodes: { ...state.nodes, [node.id]: node },
+      nodes: nextNodes,
       nodeIds: [...state.nodeIds, node.id],
       selectedIds: state.activeTool === 'select' ? [node.id] : state.selectedIds,
       history: [...state.history, prevSnapshot].slice(-30),
@@ -215,11 +232,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   updateNode: (id, updates, record = false) => set((state) => {
     const existing = state.nodes[id];
     if (!existing) return state;
+    transmitNodeUpdated(id, updates);
     const nextNodes = {
       ...state.nodes,
       [id]: { ...existing, ...updates },
     };
     if (record) {
+      GcpFirestoreService.saveBoardSnapshot(state.boardTitle, state.boardTitle, Object.values(nextNodes), state.currentUserId);
       const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
       return {
         nodes: nextNodes,
@@ -237,8 +256,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     state.selectedIds.forEach((id) => {
       if (nextNodes[id]) {
         nextNodes[id] = { ...nextNodes[id], ...updates } as CanvasNode;
+        transmitNodeUpdated(id, updates);
       }
     });
+    GcpFirestoreService.saveBoardSnapshot(state.boardTitle, state.boardTitle, Object.values(nextNodes), state.currentUserId);
     return {
       nodes: nextNodes,
       history: [...state.history, prevSnapshot].slice(-30),
@@ -248,11 +269,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   
   deleteSelected: () => set((state) => {
     if (state.selectedIds.length === 0) return state;
+    transmitNodesDeleted(state.selectedIds);
     const prevSnapshot = { nodes: { ...state.nodes }, nodeIds: [...state.nodeIds] };
     const nextNodes = { ...state.nodes };
     const toDelete = new Set(state.selectedIds);
     toDelete.forEach((id) => delete nextNodes[id]);
     const nextIds = state.nodeIds.filter((id) => !toDelete.has(id));
+    GcpFirestoreService.saveBoardSnapshot(state.boardTitle, state.boardTitle, Object.values(nextNodes), state.currentUserId);
     return {
       nodes: nextNodes,
       nodeIds: nextIds,
@@ -327,6 +350,34 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   setRoomStatus: (status) => set((state) => ({
     room: { ...state.room, ...status },
   })),
+
+  // MERGING REMOTE PEER ACTIONS (No local history recursion)
+  mergeRemoteNode: (node) => set((state) => ({
+    nodes: { ...state.nodes, [node.id]: node },
+    nodeIds: state.nodeIds.includes(node.id) ? state.nodeIds : [...state.nodeIds, node.id],
+  })),
+
+  mergeRemoteNodeUpdate: (id, updates) => set((state) => {
+    const existing = state.nodes[id];
+    if (!existing) return state;
+    return {
+      nodes: {
+        ...state.nodes,
+        [id]: { ...existing, ...updates },
+      },
+    };
+  }),
+
+  mergeRemoteDeletion: (ids) => set((state) => {
+    const toRemove = new Set(ids);
+    const nextNodes = { ...state.nodes };
+    toRemove.forEach((id) => delete nextNodes[id]);
+    return {
+      nodes: nextNodes,
+      nodeIds: state.nodeIds.filter((id) => !toRemove.has(id)),
+      selectedIds: state.selectedIds.filter((id) => !toRemove.has(id)),
+    };
+  }),
 
   loadScene: (nodesList) => set(() => {
     const nodesMap: Record<string, CanvasNode> = {};

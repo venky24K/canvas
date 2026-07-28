@@ -4,6 +4,7 @@ import { TopNavbar } from './components/toolbar/TopNavbar';
 import { FloatingToolDock } from './components/toolbar/FloatingToolDock';
 import { ZoomDock } from './components/toolbar/ZoomDock';
 import { ProjectDashboard } from './components/dashboard/ProjectDashboard';
+import { LoginPage } from './components/auth/LoginPage';
 import { useCanvasStore } from './store/useCanvasStore';
 import { useGcpSync } from './collaboration/useGcpSync';
 
@@ -12,6 +13,11 @@ export const App: React.FC = () => {
 
   // Initialize GCP Cloud Run & Real-time Multiplayer Sync
   useGcpSync();
+
+  // Render Glassmorphic GCP Identity Portal
+  if (activeView === 'login') {
+    return <LoginPage />;
+  }
 
   // Toggle seamlessly between Main Workspace Project Dashboard and Live Drawing Canvas
   if (activeView === 'dashboard') {
