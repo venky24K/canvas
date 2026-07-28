@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer, Circle, Text, Group, Line } from 'react-konva';
 import { useCanvasStore } from '../store/useCanvasStore';
 import { NodeRenderer } from './NodeRenderer';
-import { FreehandNode, ShapeNode, StickyNode } from '../types/canvas';
+import type { FreehandNode, ShapeNode, StickyNode } from '../types/canvas';
 
 export const InfiniteStage: React.FC = () => {
   const stageRef = useRef<any>(null);

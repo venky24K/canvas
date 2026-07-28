@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { CanvasNode, StyleProperties } from '../../types/canvas';
+import type { CanvasNode, StyleProperties } from '../../types/canvas';
 import { Sliders, Code, Copy, Check, Layers, Sparkles, Eye } from 'lucide-react';
 
 export const PropertiesPanel: React.FC = () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { ToolType } from '../../types/canvas';
+import type { ToolType } from '../../types/canvas';
 import {
   MousePointer,
   Hand,

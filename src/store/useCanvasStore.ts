@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { CanvasNode, ToolType, GridType, CollaborativeCursor, RoomState, StyleProperties } from '../types/canvas';
+import type { CanvasNode, ToolType, GridType, CollaborativeCursor, RoomState, StyleProperties } from '../types/canvas';
 
 interface CanvasState {
   // Nodes & Scene Graph

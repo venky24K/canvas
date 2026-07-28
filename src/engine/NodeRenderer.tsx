@@ -1,6 +1,6 @@
 import React from 'react';
 import { Rect, Ellipse, Text, Group, Path, Line } from 'react-konva';
-import { CanvasNode, FreehandNode, StickyNode, ArrowNode, ArtboardNode } from '../types/canvas';
+import type { CanvasNode, FreehandNode, StickyNode, ArrowNode, ArtboardNode } from '../types/canvas';
 import getStroke from 'perfect-freehand';
 
 interface NodeRendererProps {
