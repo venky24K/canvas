@@ -1,24 +1,24 @@
 /* ==========================================================================
-   Studio Canvas - Premium Vanilla CSS Design System & Theme Tokens
+   Studio Canvas - Clean White Design System & Theme Tokens
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Curated Dark Theme Color Palette */
-  --bg-app: #0B0E14;
-  --bg-canvas: #121620;
-  --bg-surface: rgba(22, 27, 38, 0.75);
-  --bg-surface-hover: rgba(33, 40, 56, 0.85);
-  --bg-surface-active: rgba(45, 55, 76, 0.95);
-  --bg-overlay: rgba(15, 19, 28, 0.88);
+  /* Curated White & Light Theme Palette */
+  --bg-app: #FFFFFF;
+  --bg-canvas: #F8FAFC;
+  --bg-surface: rgba(255, 255, 255, 0.85);
+  --bg-surface-hover: rgba(241, 245, 249, 0.95);
+  --bg-surface-active: rgba(226, 232, 240, 1);
+  --bg-overlay: rgba(255, 255, 255, 0.92);
   
   /* Accent Vibrancy & Highlights */
   --accent-primary: #6366F1;
   --accent-primary-hover: #4F46E5;
-  --accent-gradient: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #EC4899 100%);
-  --accent-cyan: #06B6D4;
-  --accent-cyan-glow: rgba(6, 182, 212, 0.4);
+  --accent-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+  --accent-cyan: #0EA5E9;
+  --accent-cyan-glow: rgba(14, 165, 233, 0.3);
   --accent-amber: #F59E0B;
   --accent-emerald: #10B981;
   --accent-rose: #F43F5E;
@@ -28,18 +28,18 @@
   --font-heading: 'Outfit', var(--font-sans);
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Text & Contrast Colors */
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
-  --text-accent: #C084FC;
+  /* Text & Contrast Colors (Adjusted for White Background) */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --text-accent: #6366F1;
 
-  /* Borders & Shadows (Glassmorphism Elements) */
-  --border-glass: 1px solid rgba(255, 255, 255, 0.08);
-  --border-active: 1px solid rgba(99, 102, 241, 0.5);
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  /* Borders & Shadows (Clean Glassmorphism) */
+  --border-glass: 1px solid rgba(0, 0, 0, 0.08);
+  --border-active: 1px solid rgba(99, 102, 241, 0.6);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
   --blur-glass: blur(16px);
 
   /* Spatial Transitions & Micro-Animations */
@@ -84,7 +84,7 @@ body, html, #root {
 }
 
 .glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 /* Interactive Buttons & Tool Icons */
@@ -111,9 +111,9 @@ body, html, #root {
 
 .tool-btn.active {
   background: var(--bg-surface-active);
-  color: var(--text-primary);
-  border: 1px solid rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
+  color: var(--accent-primary);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
 }
 
 .tool-btn:active {
@@ -133,13 +133,13 @@ body, html, #root {
   font-size: 0.875rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
 }
 
 .btn-primary:active {
@@ -149,8 +149,8 @@ body, html, #root {
 /* Custom Input Controls for Properties Inspector */
 .input-control {
   width: 100%;
-  background: rgba(11, 14, 20, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 6px 10px;
   color: var(--text-primary);
@@ -162,7 +162,7 @@ body, html, #root {
 .input-control:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
 
 /* Color Badge & Cursor Tags */
@@ -189,17 +189,17 @@ body, html, #root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* Custom Keyframe Animations */
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
+  0%, 100% { opacity: 0.7; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.04); }
 }
 

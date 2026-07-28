@@ -25,7 +25,7 @@ export const useGcpSync = () => {
           userId: currentUserId,
           userName: currentUserName,
           color: currentUserColor,
-          room: 'studio-gcp-demo-room',
+          room: 'studio-gcp-prod-room',
         },
       });
 
@@ -47,30 +47,14 @@ export const useGcpSync = () => {
         removeRemoteCursor(userId);
       });
     } catch (error) {
-      console.warn('GCP Cloud Run Socket connecting in local fallback demonstration mode:', error);
+      console.warn('GCP Cloud Run Socket connecting in local fallback mode:', error);
       setRoomStatus({ gcpStatus: 'connected' });
     }
-
-    // Interactive Demo Simulation: gently animate demo peers to showcase real-time fluidity to evaluators
-    const demoInterval = setInterval(() => {
-      const time = Date.now() * 0.001;
-      updateRemoteCursor({
-        userId: 'demo-peer-1',
-        userName: 'Elena (Cloud Engineer)',
-        color: '#10B981',
-        x: 280 + Math.cos(time) * 45,
-        y: 340 + Math.sin(time) * 35,
-        tool: 'select',
-        typingMessage: 'Checking Cloud Run WebSockets ✨',
-        lastUpdated: Date.now(),
-      });
-    }, 50);
 
     return () => {
       if (socket) {
         socket.disconnect();
       }
-      clearInterval(demoInterval);
     };
   }, [currentUserId, currentUserName, currentUserColor]);
 };

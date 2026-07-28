@@ -181,22 +181,22 @@ export const InfiniteStage: React.FC = () => {
       for (let x = offsetX; x < width; x += gridSize) {
         for (let y = offsetY; y < height; y += gridSize) {
           dots.push(
-            <Circle key={`dot-${x}-${y}`} x={x} y={y} radius={1.2} fill="rgba(255, 255, 255, 0.15)" />
+            <Circle key={`dot-${x}-${y}`} x={x} y={y} radius={1.3} fill="rgba(0, 0, 0, 0.15)" />
           );
         }
       }
       return dots;
     }
 
-    // Blueprint grid lines
+    // Blueprint grid lines for light background
     for (let x = offsetX; x < width; x += gridSize) {
       lines.push(
-        <Line key={`v-${x}`} points={[x, 0, x, height]} stroke="rgba(255, 255, 255, 0.05)" strokeWidth={1} />
+        <Line key={`v-${x}`} points={[x, 0, x, height]} stroke="rgba(0, 0, 0, 0.06)" strokeWidth={1} />
       );
     }
     for (let y = offsetY; y < height; y += gridSize) {
       lines.push(
-        <Line key={`h-${y}`} points={[0, y, width, y]} stroke="rgba(255, 255, 255, 0.05)" strokeWidth={1} />
+        <Line key={`h-${y}`} points={[0, y, width, y]} stroke="rgba(0, 0, 0, 0.06)" strokeWidth={1} />
       );
     }
     return lines;

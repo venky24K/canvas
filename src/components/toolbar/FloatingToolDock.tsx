@@ -50,8 +50,8 @@ export const FloatingToolDock: React.FC = () => {
       {tools.map((t, index) => (
         <React.Fragment key={t.id}>
           {/* Add a separator after structured Figma UI tools and before Excalidraw drawing tools */}
-          {index === 5 && <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />}
-          {index === 2 && <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />}
+          {index === 5 && <div style={{ width: 1, height: 28, background: 'rgba(0,0,0,0.1)', margin: '0 4px' }} />}
+          {index === 2 && <div style={{ width: 1, height: 28, background: 'rgba(0,0,0,0.1)', margin: '0 4px' }} />}
 
           <button
             onClick={() => setTool(t.id)}
@@ -85,11 +85,11 @@ export const FloatingToolDock: React.FC = () => {
       {/* Conditional Trash/Delete control when nodes are selected */}
       {selectedIds.length > 0 && (
         <>
-          <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 28, background: 'rgba(0,0,0,0.1)', margin: '0 4px' }} />
           
           <button
             onClick={bringToFront}
-            style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer' }}
+            style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', padding: '6px 10px', borderRadius: 8, background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer' }}
             title="Bring to Front"
           >
             ↑ Front
@@ -97,7 +97,7 @@ export const FloatingToolDock: React.FC = () => {
 
           <button
             onClick={sendToBack}
-            style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer' }}
+            style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', padding: '6px 10px', borderRadius: 8, background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer' }}
             title="Send to Back"
           >
             ↓ Back

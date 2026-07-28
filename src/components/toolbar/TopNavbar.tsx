@@ -47,7 +47,7 @@ export const TopNavbar: React.FC = () => {
 
   const resetViewport = () => {
     setZoom(1);
-    setPan({ x: window.innerWidth / 2 - 350, y: window.innerHeight / 2 - 400 });
+    setPan({ x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 });
   };
 
   return (
@@ -81,19 +81,20 @@ export const TopNavbar: React.FC = () => {
               color: '#FFF',
               fontWeight: 700,
               fontSize: 16,
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
             }}
           >
             S
           </div>
-          <span style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.02em', fontFamily: 'Outfit' }}>
+          <span style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.02em', fontFamily: 'Outfit', color: 'var(--text-primary)' }}>
             Studio <span style={{ color: 'var(--accent-primary)' }}>Canvas</span>
           </span>
         </div>
 
-        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* Google Cloud Run Live Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--accent-emerald)', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--accent-emerald)', background: 'rgba(16, 185, 129, 0.12)', padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(16, 185, 129, 0.25)' }}>
           <Cloud size={14} className="animate-pulse-glow" />
           <span style={{ fontWeight: 600 }}>GCP Cloud Run: {room.gcpStatus.toUpperCase()}</span>
           <Wifi size={12} style={{ marginLeft: 2 }} />
@@ -113,8 +114,8 @@ export const TopNavbar: React.FC = () => {
         <button
           onClick={resetViewport}
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(0,0,0,0.04)',
+            border: '1px solid rgba(0,0,0,0.08)',
             color: 'var(--text-primary)',
             padding: '4px 12px',
             borderRadius: 8,
@@ -122,7 +123,8 @@ export const TopNavbar: React.FC = () => {
             fontFamily: 'JetBrains Mono',
             cursor: 'pointer',
             minWidth: 64,
-            textAlign: 'center'
+            textAlign: 'center',
+            fontWeight: 600
           }}
           title="Reset Zoom to 100%"
         >
@@ -137,7 +139,7 @@ export const TopNavbar: React.FC = () => {
           <ZoomIn size={18} />
         </button>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', margin: '0 4px' }} />
 
         <button
           onClick={toggleGrid}
@@ -167,7 +169,7 @@ export const TopNavbar: React.FC = () => {
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 color: '#FFF',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 marginLeft: -6,
               }}
               title={`Peer: ${c.userName} (${c.tool})`}
@@ -188,6 +190,7 @@ export const TopNavbar: React.FC = () => {
               fontSize: '0.75rem',
               fontWeight: 700,
               color: '#FFF',
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
               marginLeft: -6,
             }}
             title={`You (${currentUserName})`}
@@ -196,7 +199,7 @@ export const TopNavbar: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* Import JSON Action */}
         <label

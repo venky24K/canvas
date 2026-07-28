@@ -36,7 +36,7 @@ export const PropertiesPanel: React.FC = () => {
     const tailwindTokens = [
       `w-[${Math.round(node.width)}px] h-[${Math.round(node.height)}px]`,
       node.cornerRadius ? `rounded-[${node.cornerRadius}px]` : '',
-      node.isGlassmorphic ? `bg-slate-900/50 backdrop-blur-xl border border-white/20 shadow-2xl` : `bg-[${node.fillColor || '#3B82F6'}]`,
+      node.isGlassmorphic ? `bg-white/80 backdrop-blur-xl border border-black/10 shadow-2xl` : `bg-[${node.fillColor || '#EEF2FF'}]`,
       node.shadowColor ? `shadow-lg` : '',
     ].filter(Boolean).join(' ');
 
@@ -47,7 +47,7 @@ export const PropertiesPanel: React.FC = () => {
     return { cssRules, tailwindTokens, svgString };
   };
 
-  const presetColors = ['#6366F1', '#3B82F6', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6', '#1E293B', '#FCD34D'];
+  const presetColors = ['#6366F1', '#0EA5E9', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6', '#0F172A', '#FEE2E2'];
 
   return (
     <aside
@@ -67,13 +67,13 @@ export const PropertiesPanel: React.FC = () => {
       className="glass-panel"
     >
       {/* Inspector Header & Tab Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
-        <span style={{ fontWeight: 700, fontSize: '0.9rem', fontFamily: 'Outfit', color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: 12 }}>
+        <span style={{ fontWeight: 700, fontSize: '0.9rem', fontFamily: 'Outfit', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Layers size={16} style={{ color: 'var(--accent-cyan)' }} />
           {selectedNode ? `${selectedNode.type.toUpperCase()} INSPECTOR` : 'DESIGN TOKENS'}
         </span>
 
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 2 }}>
+        <div style={{ display: 'flex', background: 'rgba(0,0,0,0.04)', borderRadius: 8, padding: 2 }}>
           <button
             onClick={() => setActiveTab('style')}
             style={{
@@ -83,7 +83,7 @@ export const PropertiesPanel: React.FC = () => {
               fontSize: '0.75rem',
               fontWeight: 600,
               background: activeTab === 'style' ? 'var(--accent-primary)' : 'transparent',
-              color: '#FFF',
+              color: activeTab === 'style' ? '#FFF' : 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'all 0.2s',
             }}
@@ -99,7 +99,7 @@ export const PropertiesPanel: React.FC = () => {
               fontSize: '0.75rem',
               fontWeight: 600,
               background: activeTab === 'inspect' ? 'var(--accent-primary)' : 'transparent',
-              color: '#FFF',
+              color: activeTab === 'inspect' ? '#FFF' : 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'all 0.2s',
               display: 'flex',
@@ -138,9 +138,9 @@ export const PropertiesPanel: React.FC = () => {
                     height: 32,
                     borderRadius: 8,
                     background: color,
-                    border: selectedNode.fillColor === color ? '2px solid #FFF' : '1px solid rgba(255,255,255,0.1)',
+                    border: selectedNode.fillColor === color ? '2px solid var(--text-primary)' : '1px solid rgba(0,0,0,0.1)',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                   }}
                   title={color}
                 />
@@ -190,7 +190,7 @@ export const PropertiesPanel: React.FC = () => {
           </div>
 
           {/* Glassmorphism Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.03)', padding: '12px', borderRadius: 10, border: '1px solid rgba(0,0,0,0.05)' }}>
             <div>
               <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>
                 Glassmorphism Blur
@@ -242,7 +242,7 @@ export const PropertiesPanel: React.FC = () => {
                       {copied ? <Check size={14} color="#10B981" /> : <Copy size={14} />} {copied ? 'Copied!' : 'Copy'}
                     </button>
                   </div>
-                  <pre style={{ background: 'rgba(0,0,0,0.4)', padding: '10px', borderRadius: 8, fontSize: '0.75rem', fontFamily: 'JetBrains Mono', color: '#E2E8F0', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <pre style={{ background: '#0F172A', padding: '12px', borderRadius: 10, fontSize: '0.75rem', fontFamily: 'JetBrains Mono', color: '#F8FAFC', overflowX: 'auto', border: '1px solid rgba(0,0,0,0.1)' }}>
                     {`.${selectedNode.id} {\n  ${cssRules}\n}`}
                   </pre>
                 </div>
@@ -258,7 +258,7 @@ export const PropertiesPanel: React.FC = () => {
                       Copy
                     </button>
                   </div>
-                  <pre style={{ background: 'rgba(0,0,0,0.4)', padding: '10px', borderRadius: 8, fontSize: '0.75rem', fontFamily: 'JetBrains Mono', color: '#FCD34D', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <pre style={{ background: '#0F172A', padding: '12px', borderRadius: 10, fontSize: '0.75rem', fontFamily: 'JetBrains Mono', color: '#FCD34D', overflowX: 'auto', border: '1px solid rgba(0,0,0,0.1)' }}>
                     {tailwindTokens}
                   </pre>
                 </div>
@@ -266,7 +266,7 @@ export const PropertiesPanel: React.FC = () => {
                 {/* SVG String */}
                 <div>
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-rose)', marginBottom: 6, display: 'block' }}>SVG VECTOR STRING</span>
-                  <pre style={{ background: 'rgba(0,0,0,0.4)', padding: '10px', borderRadius: 8, fontSize: '0.7rem', fontFamily: 'JetBrains Mono', color: '#94A3B8', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', maxHeight: 100 }}>
+                  <pre style={{ background: '#0F172A', padding: '12px', borderRadius: 10, fontSize: '0.7rem', fontFamily: 'JetBrains Mono', color: '#94A3B8', overflowX: 'auto', border: '1px solid rgba(0,0,0,0.1)', maxHeight: 100 }}>
                     {svgString}
                   </pre>
                 </div>
