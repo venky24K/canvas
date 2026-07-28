@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
+import { GcpAuthService } from '../../cloud/GcpAuthService';
 import {
   Plus,
   Clock,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const ProjectDashboard: React.FC = () => {
-  const { openBoard } = useCanvasStore();
+  const { openBoard, setActiveView } = useCanvasStore();
   const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -375,6 +376,11 @@ export const ProjectDashboard: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={async () => {
+                    await GcpAuthService.signOut();
+                    setShowProfileMenu(false);
+                    setActiveView('login');
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

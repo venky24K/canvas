@@ -79,13 +79,49 @@ interface CanvasState {
   exportSceneJson: () => string;
 }
 
+const getInitialView = (): 'login' | 'dashboard' | 'canvas' => {
+  if (typeof window !== 'undefined') {
+    const cachedView = localStorage.getItem('bloom_active_view');
+    if (cachedView === 'dashboard' || cachedView === 'canvas') {
+      return cachedView;
+    }
+  }
+  return 'login';
+};
+
+const getInitialBoardTitle = (): string => {
+  if (typeof window !== 'undefined') {
+    const cachedTitle = localStorage.getItem('bloom_active_board_title');
+    if (cachedTitle) return cachedTitle;
+  }
+  return 'Product Roadmap Q3';
+};
+
 export const useCanvasStore = create<CanvasState>((set, get) => ({
-  // Default to stunning Glassmorphic Login Portal when application loads
-  activeView: 'login',
-  boardTitle: 'Product Roadmap Q3',
-  setActiveView: (view) => set({ activeView: view }),
-  setBoardTitle: (title) => set({ boardTitle: title }),
+  // Persist session view across browser refreshes so user doesn't get logged out
+  activeView: getInitialView(),
+  boardTitle: getInitialBoardTitle(),
+  setActiveView: (view) => {
+    if (typeof window !== 'undefined') {
+      if (view === 'login') {
+        localStorage.removeItem('bloom_active_view');
+      } else {
+        localStorage.setItem('bloom_active_view', view);
+      }
+    }
+    set({ activeView: view });
+  },
+  setBoardTitle: (title) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bloom_active_board_title', title);
+    }
+    set({ boardTitle: title });
+  },
   openBoard: (title, nodesList = []) => set(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bloom_active_view', 'canvas');
+      localStorage.setItem('bloom_active_board_title', title);
+    }
     const nodesMap: Record<string, CanvasNode> = {};
     const ids: string[] = [];
     nodesList.forEach((n) => {
