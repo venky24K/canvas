@@ -28,7 +28,7 @@ export const ZoomDock: React.FC = () => {
       }}
     >
       <button
-        onClick={() => setZoom((z) => Math.max(0.1, z - 0.15))}
+        onClick={() => setZoom((z) => Math.max(0.2, z - 0.2))}
         className="tool-btn"
         style={{ width: 32, height: 32, borderRadius: 8 }}
         title="Zoom Out (-)"
@@ -60,7 +60,7 @@ export const ZoomDock: React.FC = () => {
       </button>
 
       <button
-        onClick={() => setZoom((z) => Math.min(10, z + 0.15))}
+        onClick={() => setZoom((z) => Math.min(5, z + 0.2))}
         className="tool-btn"
         style={{ width: 32, height: 32, borderRadius: 8 }}
         title="Zoom In (+)"

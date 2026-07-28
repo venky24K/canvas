@@ -52,7 +52,7 @@ export const InfiniteStage: React.FC = () => {
     };
 
     const zoomFactor = e.evt.deltaY < 0 ? 1.1 : 0.9;
-    const newScale = Math.min(10, Math.max(0.1, oldScale * zoomFactor));
+    const newScale = Math.min(5, Math.max(0.2, oldScale * zoomFactor));
 
     setZoom(newScale);
     setPan({
@@ -165,45 +165,43 @@ export const InfiniteStage: React.FC = () => {
     }
   };
 
-  // Render Background Grid lines based on pan and zoom coordinates
-  const renderGrid = () => {
-    if (gridType === 'none') return null;
-    const gridSize = 40 * zoom;
-    const offsetX = pan.x % gridSize;
-    const offsetY = pan.y % gridSize;
+  // Generate Truly Infinite CSS Background Pattern (60fps performance without DOM Konva node overhead)
+  const getInfiniteGridStyle = (): React.CSSProperties => {
+    if (gridType === 'none') {
+      return { backgroundColor: '#F8FAFC' };
+    }
 
-    const lines = [];
-    const width = dimensions.width;
-    const height = dimensions.height;
+    // Smooth scaled grid dimensions proportional to zoom level (base 28px)
+    const size = Math.max(8, Math.round(28 * zoom));
 
     if (gridType === 'dot') {
-      const dots = [];
-      for (let x = offsetX; x < width; x += gridSize) {
-        for (let y = offsetY; y < height; y += gridSize) {
-          dots.push(
-            <Circle key={`dot-${x}-${y}`} x={x} y={y} radius={1.3} fill="rgba(0, 0, 0, 0.15)" />
-          );
-        }
-      }
-      return dots;
+      return {
+        backgroundColor: '#F8FAFC',
+        backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.16) 1.3px, transparent 1.3px)',
+        backgroundSize: `${size}px ${size}px`,
+        backgroundPosition: `${pan.x}px ${pan.y}px`,
+      };
     }
 
-    // Blueprint grid lines for light background
-    for (let x = offsetX; x < width; x += gridSize) {
-      lines.push(
-        <Line key={`v-${x}`} points={[x, 0, x, height]} stroke="rgba(0, 0, 0, 0.06)" strokeWidth={1} />
-      );
-    }
-    for (let y = offsetY; y < height; y += gridSize) {
-      lines.push(
-        <Line key={`h-${y}`} points={[0, y, width, y]} stroke="rgba(0, 0, 0, 0.06)" strokeWidth={1} />
-      );
-    }
-    return lines;
+    // Line Blueprint Grid
+    return {
+      backgroundColor: '#F8FAFC',
+      backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px)`,
+      backgroundSize: `${size}px ${size}px`,
+      backgroundPosition: `${pan.x}px ${pan.y}px`,
+    };
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh', cursor: activeTool === 'hand' ? 'grab' : 'default' }}>
+    <div
+      style={{
+        width: '100vw',
+        height: '100vh',
+        cursor: activeTool === 'hand' ? 'grab' : 'default',
+        ...getInfiniteGridStyle(),
+      }}
+    >
       <Stage
         ref={stageRef}
         width={dimensions.width}
@@ -217,18 +215,18 @@ export const InfiniteStage: React.FC = () => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onDragMove={(e) => {
+          if (e.target === stageRef.current) {
+            setPan({ x: e.target.x(), y: e.target.y() });
+          }
+        }}
         onDragEnd={(e) => {
           if (e.target === stageRef.current) {
             setPan({ x: e.target.x(), y: e.target.y() });
           }
         }}
       >
-        {/* Layer 1: Interactive Grid Foundation */}
-        <Layer x={-pan.x} y={-pan.y} scaleX={1} scaleY={1}>
-          {renderGrid()}
-        </Layer>
-
-        {/* Layer 2: Core Canvas Nodes (Ordered by Z-Index) */}
+        {/* Layer 1: Core Canvas Nodes (Ordered by Z-Index) */}
         <Layer>
           {nodeIds.map((id) => {
             const node = nodes[id];
@@ -250,7 +248,7 @@ export const InfiniteStage: React.FC = () => {
           })}
         </Layer>
 
-        {/* Layer 3: Real-time Live Multiplayer Cursors */}
+        {/* Layer 2: Real-time Live Multiplayer Cursors */}
         <Layer>
           {Object.values(cursors).map((cursor) => (
             <Group key={cursor.userId} x={cursor.x} y={cursor.y}>
