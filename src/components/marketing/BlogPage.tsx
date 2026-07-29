@@ -117,7 +117,7 @@ export const BlogPage: React.FC = () => {
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 40 }}>
           {mockPosts.map(post => (
-            <article key={post.id} style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', group: 'true' }}>
+            <article key={post.id} className="group" style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
               <div style={{ width: '100%', height: 240, borderRadius: 16, overflow: 'hidden', marginBottom: 20, position: 'relative' }}>
                 <img 
                   src={post.image} 

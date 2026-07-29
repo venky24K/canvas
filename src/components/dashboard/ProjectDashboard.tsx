@@ -36,7 +36,9 @@ export const ProjectDashboard: React.FC = () => {
       title: doc.title,
       edited: isNew ? 'Edited recently' : `Edited ${new Date(doc.updatedAt).toLocaleDateString()}`,
       avatars: ['#4F46E5'],
+      extraAvatars: undefined as string | undefined,
       type: doc.nodeCount > 0 ? 'flow' : 'roadmap',
+      thumbnailUrl: doc.thumbnailUrl,
     };
   });
 
