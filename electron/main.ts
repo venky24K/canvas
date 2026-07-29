@@ -3,9 +3,13 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ipcMain } from 'electron'
 
+// Set app name ASAP before any windows open (affects macOS menu bar)
 app.setName('Bloom')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// Resolve app root whether in dev (dist-electron/) or prod mode
+const APP_ROOT = path.join(__dirname, '..')
+const ICON_PATH = path.join(APP_ROOT, 'public', 'app-icon.png')
 
 ipcMain.handle('open-external', async (event, url) => {
   await shell.openExternal(url)
@@ -27,10 +31,13 @@ function createWindow() {
     width: 1440,
     height: 900,
     title: 'Bloom',
-    icon: path.join(__dirname, '../public/app-icon.png'),
-    titleBarStyle: 'hiddenInset', // Makes it look like a native Mac app
+    icon: ICON_PATH,
+    titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: false, // Allow loading local files from asar in production
     },
   })
 
@@ -157,6 +164,10 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     createMenu()
     createWindow()
+    // Set macOS Dock icon explicitly for dev mode
+    if (process.platform === 'darwin' && app.dock) {
+      app.dock.setIcon(ICON_PATH)
+    }
   })
 }
 

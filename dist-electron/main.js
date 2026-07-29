@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 //#region electron/main.ts
 app.setName("Bloom");
 var __dirname = path.dirname(fileURLToPath(import.meta.url));
+var APP_ROOT = path.join(__dirname, "..");
+var ICON_PATH = path.join(APP_ROOT, "public", "app-icon.png");
 ipcMain.handle("open-external", async (event, url) => {
 	await shell.openExternal(url);
 });
@@ -18,9 +20,14 @@ function createWindow() {
 		width: 1440,
 		height: 900,
 		title: "Bloom",
-		icon: path.join(__dirname, "../public/app-icon.png"),
+		icon: ICON_PATH,
 		titleBarStyle: "hiddenInset",
-		webPreferences: { preload: path.join(__dirname, "preload.js") }
+		webPreferences: {
+			preload: path.join(__dirname, "preload.js"),
+			contextIsolation: true,
+			nodeIntegration: false,
+			webSecurity: false
+		}
 	});
 	win.webContents.setWindowOpenHandler(({ url }) => {
 		if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -128,6 +135,7 @@ else {
 	app.whenReady().then(() => {
 		createMenu();
 		createWindow();
+		if (process.platform === "darwin" && app.dock) app.dock.setIcon(ICON_PATH);
 	});
 }
 app.on("open-url", (event, url) => {
