@@ -1,7 +1,8 @@
 {
-  "name": "canvas",
+  "name": "bloom",
+  "productName": "Bloom",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -10,6 +11,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build:electron": "vite build && electron-builder"
+  },
+  "build": {
+    "appId": "com.bloom.canvas",
+    "productName": "Bloom",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "public/app-icon.png"
+    }
   },
   "dependencies": {
     "firebase": "^12.16.0",

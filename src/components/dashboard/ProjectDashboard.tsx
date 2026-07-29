@@ -222,7 +222,7 @@ export const ProjectDashboard: React.FC = () => {
     );
   };
 
-  const isDesktop = typeof window !== 'undefined' && !!(window as any).electronAPI;
+  const isDesktop = typeof window !== 'undefined' && (!!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron'));
   const isDefaultUser = currentUserId === 'gcp-usr-venky';
 
   if (isDesktop && isDefaultUser) {
@@ -233,10 +233,12 @@ export const ProjectDashboard: React.FC = () => {
         <p style={{ color: '#6B7280', marginBottom: 32, fontSize: '1.1rem' }}>Please authenticate to access your workspaces and sync your boards.</p>
         <button
           onClick={() => {
-            const url = window.location.hostname === 'localhost' 
-              ? 'http://localhost:5173/?view=login&desktop_auth=true'
-              : 'https://bloom-app-1022228413582.asia-southeast1.run.app/?view=login&desktop_auth=true';
-            (window as any).electronAPI.openExternal(url);
+            const url = 'https://bloom-app-1022228413582.asia-southeast1.run.app/?view=login&desktop_auth=true';
+            if ((window as any).electronAPI) {
+              (window as any).electronAPI.openExternal(url);
+            } else {
+              window.open(url, '_blank');
+            }
           }}
           style={{
             padding: '12px 24px',
@@ -257,20 +259,37 @@ export const ProjectDashboard: React.FC = () => {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#FFFFFF', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', overflow: 'hidden', color: '#14161A' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', background: '#FFFFFF', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', overflow: 'hidden', color: '#14161A' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap');
       `}</style>
 
-      {/* LEFT SIDEBAR NAVIGATION */}
-      <aside style={{ width: 250, height: '100%', background: '#FAFAFB', borderRight: '1px solid #EFEFF2', display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px', marginBottom: 20 }}>
-          <BloomMark size={20} />
-          <span style={{ fontFamily: '"Fraunces", serif', fontSize: '1.05rem', fontWeight: 600, letterSpacing: '-0.01em', color: '#14161A' }}>
-            Bloom
-          </span>
-        </div>
+      {/* NATIVE DESKTOP TOP BAR (Traffic Lights Clearance & Draggable Window Area) */}
+      {isDesktop && (
+        <div
+          style={{
+            height: 38,
+            width: '100%',
+            background: '#FAFAFB',
+            borderBottom: '1px solid #EFEFF2',
+            WebkitAppRegion: 'drag' as any,
+            userSelect: 'none',
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      {/* CONTENT BODY */}
+      <div style={{ display: 'flex', flex: 1, width: '100%', overflow: 'hidden' }}>
+        {/* LEFT SIDEBAR NAVIGATION */}
+        <aside style={{ width: 250, height: '100%', background: '#FAFAFB', borderRight: '1px solid #EFEFF2', display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
+          {/* Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 4px', marginBottom: 20 }}>
+            <BloomMark size={30} />
+            <span style={{ fontFamily: '"Fraunces", serif', fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.02em', color: '#14161A' }}>
+              Bloom
+            </span>
+          </div>
 
         {/* Profile Dropdown & Notifications Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, position: 'relative', zIndex: 100 }}>
@@ -324,8 +343,10 @@ export const ProjectDashboard: React.FC = () => {
                 </div>
               )}
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#14161A' }}>{currentUserName || 'User'}</span>
-            <ChevronDown size={15} color="#6B7280" />
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#14161A', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {currentUserName || 'User'}
+            </span>
+            <ChevronDown size={15} color="#6B7280" style={{ flexShrink: 0 }} />
           </button>
 
           <button
@@ -622,28 +643,6 @@ export const ProjectDashboard: React.FC = () => {
           })}
         </nav>
 
-        {/* Footer Area: Settings */}
-        <div style={{ borderTop: '1px solid #EFEFF2', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              background: 'transparent',
-              border: 'none',
-              color: '#6B7280',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              padding: '6px 8px',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#14161A')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#6B7280')}
-          >
-            <Settings size={18} color="#6B7280" />
-            <span>Settings</span>
-          </button>
-        </div>
       </aside>
 
       {/* MAIN WORKSPACE GALLERY & CONTROLS */}
@@ -817,6 +816,7 @@ export const ProjectDashboard: React.FC = () => {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 };

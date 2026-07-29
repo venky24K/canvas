@@ -48,32 +48,38 @@ export const App: React.FC = () => {
   useEffect(() => {
     const electronAPI = (window as any).electronAPI;
     if (electronAPI) {
-      // Force user off marketing pages
-      if (activeView === 'landing' || activeView === 'downloads') {
-        setActiveView('dashboard');
-      }
-
       electronAPI.onDeepLink((url: string) => {
+        console.log('[Deep Link] Received:', url);
         try {
-          const urlObj = new URL(url);
-          if (urlObj.hostname === 'auth' && urlObj.searchParams.has('data')) {
-            const dataBase64 = urlObj.searchParams.get('data')!;
-            const decoded = atob(dataBase64);
+          let dataBase64 = '';
+          if (url.includes('data=')) {
+            dataBase64 = url.split('data=')[1].split('&')[0];
+          }
+          if (dataBase64) {
+            const decoded = decodeURIComponent(atob(dataBase64));
             const profile = JSON.parse(decoded);
+            console.log('[Deep Link] Profile:', profile);
+            // Use getState() to avoid stale closure
+            const { setUserIdentity, setActiveView } = useCanvasStore.getState();
             setUserIdentity(profile.uid, profile.displayName, profile.avatarColor, profile.photoURL);
             setActiveView('dashboard');
           }
         } catch (e) {
-          console.error('Failed to parse deep link auth payload:', e);
+          console.error('[Deep Link] Failed to parse auth payload:', e);
         }
       });
-    } else {
-      // Also force off marketing pages even if not in electron
-      if (activeView === 'landing' || activeView === 'downloads') {
-        setActiveView('dashboard');
-      }
     }
-  }, [activeView, setActiveView, setUserIdentity]);
+  }, []); // Only register once
+
+  // Force off marketing pages
+  useEffect(() => {
+    const isElectron = !!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron && (activeView === 'landing' || activeView === 'downloads')) {
+      setActiveView('dashboard');
+    } else if (!isElectron && (activeView === 'landing' || activeView === 'downloads')) {
+      setActiveView('dashboard');
+    }
+  }, [activeView, setActiveView]);
 
   // Initialize GCP Cloud Run & Real-time Multiplayer Sync
   useGcpSync();

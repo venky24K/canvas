@@ -38,6 +38,7 @@ export const TopNavbar: React.FC = () => {
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const isDesktop = typeof window !== 'undefined' && (!!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron'));
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -140,8 +141,8 @@ export const TopNavbar: React.FC = () => {
     <div
       style={{
         position: 'fixed',
-        top: 16,
-        left: 16,
+        top: isDesktop ? 44 : 16,
+        left: isDesktop ? 80 : 16,
         right: 16,
         zIndex: 100,
         display: 'flex',

@@ -19,8 +19,23 @@ export const LoginPage: React.FC = () => {
   const { setActiveView, setUserIdentity } = useCanvasStore();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [desktopAuthSuccess, setDesktopAuthSuccess] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
+    const isDesktop = typeof window !== 'undefined' && (!!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron'));
+    const isDesktopAuthParam = new URLSearchParams(window.location.search).get('desktop_auth') === 'true';
+
+    // If inside Desktop App (and NOT on the website with desktop_auth param), open the web login in external browser
+    if (isDesktop && !isDesktopAuthParam) {
+      const url = 'https://bloom-app-1022228413582.asia-southeast1.run.app/?view=login&desktop_auth=true';
+      if ((window as any).electronAPI) {
+        (window as any).electronAPI.openExternal(url);
+      } else {
+        window.open(url, '_blank');
+      }
+      return;
+    }
+
     setIsAuthenticating(true);
     setAuthError(null);
     try {
@@ -28,8 +43,11 @@ export const LoginPage: React.FC = () => {
       
       const isDesktopAuth = new URLSearchParams(window.location.search).get('desktop_auth') === 'true';
       if (isDesktopAuth) {
-        const payload = btoa(JSON.stringify(profile));
+        const payload = btoa(encodeURIComponent(JSON.stringify(profile)));
         window.location.href = `bloom://auth?data=${payload}`;
+        setIsAuthenticating(false);
+        setAuthError(null);
+        setDesktopAuthSuccess(profile.displayName);
         return;
       }
 
@@ -136,6 +154,24 @@ export const LoginPage: React.FC = () => {
         >
           Your canvas is waiting.
         </p>
+
+        {desktopAuthSuccess && (
+          <div style={{
+            width: '100%',
+            padding: '12px',
+            marginBottom: '24px',
+            background: '#ECFDF5',
+            border: '1px solid #A7F3D0',
+            borderRadius: '8px',
+            color: '#059669',
+            fontSize: '0.85rem',
+            lineHeight: 1.4,
+            textAlign: 'center',
+            fontWeight: 500
+          }}>
+            🎉 Authenticated as <strong>{desktopAuthSuccess}</strong>! Launching Bloom Desktop...
+          </div>
+        )}
 
         {authError && (
           <div style={{
