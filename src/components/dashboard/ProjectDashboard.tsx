@@ -44,11 +44,7 @@ export const ProjectDashboard: React.FC = () => {
   const [activeNav, setActiveNav] = useState<NavId>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [boardDocs, setBoardDocs] = useState<FirestoreBoardDocument[]>([]);
-
-  useEffect(() => {
-    setBoardDocs(GcpFirestoreService.getAllBoards());
-  }, []);
+  const [boardDocs, setBoardDocs] = useState<FirestoreBoardDocument[]>(() => GcpFirestoreService.getAllBoards());
 
   const boards = boardDocs.map((doc) => {
     const isNew = new Date().getTime() - new Date(doc.updatedAt).getTime() < 1000 * 60 * 60 * 24;
@@ -90,7 +86,7 @@ export const ProjectDashboard: React.FC = () => {
       try {
         const nodes = JSON.parse(boardDoc.serializedState);
         openBoard(title, nodes);
-      } catch (e) {
+      } catch (err) {
         openBoard(title);
       }
     } else {

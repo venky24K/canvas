@@ -1,6 +1,7 @@
 import React from 'react';
 import { Rect, Ellipse, Text, Group, Path, Line } from 'react-konva';
-import type { CanvasNode, FreehandNode, StickyNode, ArrowNode, ArtboardNode } from '../types/canvas';
+import type Konva from 'konva';
+import type { CanvasNode, FreehandNode, StickyNode, ArrowNode, ArtboardNode, TextNode } from '../types/canvas';
 import getStroke from 'perfect-freehand';
 import { useCanvasStore } from '../store/useCanvasStore';
 
@@ -8,7 +9,7 @@ interface NodeRendererProps {
   node: CanvasNode;
   isSelected: boolean;
   isEditing?: boolean;
-  onSelect: (id: string, e: any) => void;
+  onSelect: (id: string, e: Konva.KonvaEventObject<Event>) => void;
   onDoubleClick?: (id: string) => void;
   onChange: (id: string, newProps: Partial<CanvasNode>) => void;
 }
@@ -30,7 +31,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, is
   const activeTool = useCanvasStore((state) => state.activeTool);
   const isDraggable = activeTool === 'select' && !node.isLocked;
 
-  const handleDragEnd = (e: any) => {
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     onChange(node.id, {
       x: e.target.x(),
       y: e.target.y(),
@@ -247,11 +248,11 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, is
             visible={!isEditing}
             text={node.text || ''}
             width={node.width}
-            fontSize={(node as any).fontSize || 20}
-            fontFamily={(node as any).fontFamily || 'Outfit'}
-            fontWeight={(node as any).fontWeight || '600'}
-            fill={node.fillColor || '#FFFFFF'}
-            align={(node as any).textAlign || 'left'}
+            fontSize={(node as TextNode).fontSize || 20}
+            fontFamily={(node as TextNode).fontFamily || 'Outfit'}
+            fontWeight={(node as TextNode).fontWeight || '600'}
+            fill={node.fillColor || '#FFF'}
+            align={(node as TextNode).textAlign || 'left'}
             stroke={isSelected ? 'rgba(99, 102, 241, 0.4)' : 'transparent'}
             strokeWidth={isSelected ? 1 : 0}
           />

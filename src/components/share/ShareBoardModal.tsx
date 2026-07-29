@@ -33,7 +33,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
         .then(r => r.json())
         .then(data => {
           if (data.members) {
-            setInvitedMembers(data.members.map((m: any, i: number) => ({
+            setInvitedMembers(data.members.map((m: { email: string; role: 'editor' | 'viewer' | 'owner'; status: 'joined' | 'pending' }, i: number) => ({
               email: m.email,
               name: m.email.split('@')[0],
               role: m.role,
@@ -355,7 +355,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
                       <button
                         key={role}
                         onClick={() => {
-                          setAnyoneRole(role as any);
+                          setAnyoneRole(role as 'can view' | 'can edit' | 'no access');
                           setShowRoleDropdown(false);
                         }}
                         style={{

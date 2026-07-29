@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import type { ToolType } from '../../types/canvas';
+import type { ToolType, CanvasNode } from '../../types/canvas';
 import {
   MousePointer2,
   Hand,
@@ -130,13 +130,6 @@ export const FloatingToolDock: React.FC = () => {
     { label: 'XL', value: 36, title: 'Extra bold (36px)' },
   ];
 
-  const fontSizes = [
-    { label: 'S', value: 16, title: 'Small text (16px)' },
-    { label: 'M', value: 24, title: 'Medium text (24px)' },
-    { label: 'L', value: 48, title: 'Large text (48px)' },
-    { label: 'XL', value: 96, title: 'Huge text (96px)' },
-  ];
-
   // Determine active color and thickness to highlight in the palette
   const firstSelectedNode = selectedIds.length > 0 ? nodes[selectedIds[0]] : null;
   const activeColor = firstSelectedNode?.fillColor || defaultStyles.fillColor || '#8789FF';
@@ -148,7 +141,7 @@ export const FloatingToolDock: React.FC = () => {
     if (selectedIds.length > 0) {
       updateSelectedNodes({ fillColor: color, strokeColor });
     } else {
-      updateDefaultStyles({ fillColor: color, strokeColor } as any);
+      updateDefaultStyles({ fillColor: color, strokeColor } as Partial<CanvasNode>);
     }
   };
 
@@ -156,7 +149,7 @@ export const FloatingToolDock: React.FC = () => {
     if (selectedIds.length > 0) {
       updateSelectedNodes({ strokeWidth: width });
     } else {
-      updateDefaultStyles({ strokeWidth: width } as any);
+      updateDefaultStyles({ strokeWidth: width } as Partial<CanvasNode>);
     }
   };
 
@@ -164,7 +157,7 @@ export const FloatingToolDock: React.FC = () => {
     if (selectedIds.length > 0) {
       updateSelectedNodes({ fontSize: size });
     } else {
-      updateDefaultStyles({ fontSize: size });
+      updateDefaultStyles({ fontSize: size } as Partial<CanvasNode>);
     }
   };
 

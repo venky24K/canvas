@@ -2,10 +2,11 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer, Circle, Text, Group, Line, Rect } from 'react-konva';
 import { useCanvasStore } from '../store/useCanvasStore';
 import { NodeRenderer } from './NodeRenderer';
-import type { FreehandNode, ShapeNode, StickyNode } from '../types/canvas';
+import type Konva from 'konva';
+import type { FreehandNode, ShapeNode, StickyNode, ArtboardNode, TextNode, ArrowNode } from '../types/canvas';
 
 export const InfiniteStage: React.FC = () => {
-  const stageRef = useRef<any>(null);
+  const stageRef = useRef<Konva.Stage>(null);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStrokeId, setCurrentStrokeId] = useState<string | null>(null);
@@ -77,7 +78,7 @@ export const InfiniteStage: React.FC = () => {
   }, [boardTitle, currentUserId, nodes, registerThumbnailCapture]);
 
   // Mouse wheel zoom centered on cursor coordinates
-  const handleWheel = (e: any) => {
+  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = stageRef.current;
     if (!stage) return;
@@ -100,7 +101,7 @@ export const InfiniteStage: React.FC = () => {
     });
   };
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     // If middle click or hand tool, enable panning
     if (e.evt.button === 1 || activeTool === 'hand') return;
 
@@ -155,7 +156,7 @@ export const InfiniteStage: React.FC = () => {
 
     if (activeTool === 'artboard') {
       if (e.target !== stage) return;
-      const newArtboard: any = {
+      const newArtboard: ArtboardNode = {
         id: `artboard-${Date.now()}`,
         type: 'artboard',
         deviceLabel: 'Desktop Frame (1440 × 900)',
@@ -181,7 +182,7 @@ export const InfiniteStage: React.FC = () => {
 
     if (activeTool === 'text') {
       if (e.target !== stage) return;
-      const newText: any = {
+      const newText: TextNode = {
         id: `text-${Date.now()}`,
         type: 'text',
         text: '✨ Collaborative Text\nClick to select and edit styling.',
@@ -207,7 +208,7 @@ export const InfiniteStage: React.FC = () => {
 
     if (activeTool === 'arrow') {
       if (e.target !== stage) return;
-      const newArrow: any = {
+      const newArrow: ArrowNode = {
         id: `arrow-${Date.now()}`,
         type: 'arrow',
         x: 0,
@@ -275,7 +276,7 @@ export const InfiniteStage: React.FC = () => {
     }
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
     const pointer = stage.getRelativePointerPosition();
 
@@ -495,9 +496,9 @@ export const InfiniteStage: React.FC = () => {
             left: nodes[editingNodeId].x * zoom + pan.x + (nodes[editingNodeId].type === 'sticky' ? 24 * zoom : 0),
             width: (nodes[editingNodeId].width || 200) * zoom - (nodes[editingNodeId].type === 'sticky' ? 48 * zoom : 0),
             height: (nodes[editingNodeId].height || 100) * zoom - (nodes[editingNodeId].type === 'sticky' ? 48 * zoom : 0),
-            fontSize: ((nodes[editingNodeId] as any).fontSize || 20) * zoom,
-            fontFamily: (nodes[editingNodeId] as any).fontFamily || 'Outfit',
-            fontWeight: (nodes[editingNodeId] as any).fontWeight || '600',
+            fontSize: ((nodes[editingNodeId] as TextNode).fontSize || 20) * zoom,
+            fontFamily: (nodes[editingNodeId] as TextNode).fontFamily || 'Outfit',
+            fontWeight: (nodes[editingNodeId] as TextNode).fontWeight || '600',
             color: nodes[editingNodeId].type === 'sticky' ? '#1E293B' : (nodes[editingNodeId].fillColor || '#FFF'),
             background: 'transparent',
             border: 'none',
