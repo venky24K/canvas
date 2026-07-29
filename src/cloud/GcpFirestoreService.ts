@@ -15,6 +15,8 @@ export interface FirestoreBoardDocument {
   serializedState: string; // Compressed JSON scene representation
   cloudStatus: 'synced' | 'syncing' | 'offline_cached';
   thumbnailUrl?: string; // Optional Google Cloud Storage thumbnail URI
+  isStarred?: boolean;
+  isTrash?: boolean;
 }
 
 class GcpFirestoreServiceClass {
@@ -142,6 +144,46 @@ class GcpFirestoreServiceClass {
     const bucket = firebaseConfig.storageBucket || 'bloom-studio-prod.appspot.com';
     const encoded = encodeURIComponent(fileName);
     return `https://storage.googleapis.com/${bucket}/${encoded}?token=${Date.now()}`;
+  }
+
+  // Update arbitrary board metadata like isStarred or isTrash
+  public async updateBoardMetadata(boardId: string, updates: Partial<FirestoreBoardDocument>): Promise<void> {
+    const existing = this.localCache.get(boardId) || JSON.parse(localStorage.getItem(`gcp_firestore_board_${boardId}`) || 'null');
+    if (!existing) return;
+
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+    this.localCache.set(boardId, updated);
+    localStorage.setItem(`gcp_firestore_board_${boardId}`, JSON.stringify(updated));
+
+    if (firestoreDb) {
+      try {
+        const cleanId = boardId.toLowerCase().replace(/\s+/g, '-');
+        const docRef = doc(firestoreDb, 'rooms', cleanId);
+        await setDoc(docRef, updated, { merge: true });
+        console.log(`🚀 [GCP Cloud Firestore] Updated metadata for board ${boardId}`);
+      } catch (cloudErr) {
+        console.warn(`⚠️ [GCP Firestore Notice] Could not update cloud metadata:`, cloudErr);
+      }
+    }
+  }
+
+  // Permanently delete a board
+  public async deleteBoard(boardId: string): Promise<void> {
+    this.localCache.delete(boardId);
+    localStorage.removeItem(`gcp_firestore_board_${boardId}`);
+    
+    // Also remove it from the 'boards' list if we tracked it there (we get it by scanning storage usually)
+    if (firestoreDb) {
+      try {
+        const cleanId = boardId.toLowerCase().replace(/\s+/g, '-');
+        const { deleteDoc } = await import('firebase/firestore');
+        const docRef = doc(firestoreDb, 'rooms', cleanId);
+        await deleteDoc(docRef);
+        console.log(`🚀 [GCP Cloud Firestore] Deleted board ${boardId}`);
+      } catch (cloudErr) {
+        console.warn(`⚠️ [GCP Firestore Notice] Could not delete cloud board:`, cloudErr);
+      }
+    }
   }
 }
 

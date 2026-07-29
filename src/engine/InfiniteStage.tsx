@@ -40,12 +40,12 @@ export const InfiniteStage: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Periodic background thumbnail capture (every 30s) and registration
+  // Debounced background thumbnail capture (3s after last edit)
   useEffect(() => {
     const captureThumbnail = async () => {
       if (!stageRef.current) return;
       try {
-        const dataUrl = stageRef.current.toDataURL({ pixelRatio: 0.5, mimeType: 'image/jpeg', quality: 0.7 });
+        const dataUrl = stageRef.current.toDataURL({ pixelRatio: 0.5, mimeType: 'image/png' });
         const { GcpStorageService } = await import('../cloud/GcpStorageService');
         const { GcpFirestoreService } = await import('../cloud/GcpFirestoreService');
         const url = await GcpStorageService.uploadBoardThumbnail(dataUrl, boardTitle);
@@ -59,12 +59,19 @@ export const InfiniteStage: React.FC = () => {
     };
 
     registerThumbnailCapture(captureThumbnail);
-    const interval = setInterval(captureThumbnail, 30000);
+    
+    const timeout = setTimeout(() => {
+      // Only capture if there are nodes on the canvas
+      if (Object.keys(nodes).length > 0) {
+        captureThumbnail();
+      }
+    }, 3000);
+
     return () => {
-      clearInterval(interval);
+      clearTimeout(timeout);
       registerThumbnailCapture(async () => {});
     };
-  }, [boardTitle, currentUserId, registerThumbnailCapture]);
+  }, [boardTitle, currentUserId, nodes, registerThumbnailCapture]);
 
   // Mouse wheel zoom centered on cursor coordinates
   const handleWheel = (e: any) => {

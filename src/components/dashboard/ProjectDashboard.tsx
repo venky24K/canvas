@@ -39,10 +39,23 @@ export const ProjectDashboard: React.FC = () => {
       extraAvatars: undefined as string | undefined,
       type: doc.nodeCount > 0 ? 'flow' : 'roadmap',
       thumbnailUrl: doc.thumbnailUrl,
+      isStarred: doc.isStarred,
+      isTrash: doc.isTrash,
     };
   });
 
-  const filteredBoards = boards.filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredBoards = boards.filter(b => {
+    // Search query filter
+    if (!b.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+
+    // Sidebar navigation filter
+    if (activeNav === 'starred') return b.isStarred && !b.isTrash;
+    if (activeNav === 'trash') return b.isTrash;
+    if (activeNav === 'shared') return false; // Mock shared for now
+
+    // Recent filter (default) excludes trash
+    return !b.isTrash;
+  });
 
   const handleCreateNew = () => {
     openBoard('Untitled Board');
@@ -60,6 +73,28 @@ export const ProjectDashboard: React.FC = () => {
     } else {
       openBoard(title);
     }
+  };
+
+  const handleToggleStar = async (e: React.MouseEvent, boardId: string, currentStarred: boolean) => {
+    e.stopPropagation();
+    await GcpFirestoreService.updateBoardMetadata(boardId, { isStarred: !currentStarred });
+    setBoardDocs(GcpFirestoreService.getAllBoards());
+  };
+
+  const handleToggleTrash = async (e: React.MouseEvent, boardId: string, currentTrash: boolean) => {
+    e.stopPropagation();
+    if (!currentTrash) {
+      if (!window.confirm('Are you sure you want to move this bloom to the trash?')) return;
+    }
+    await GcpFirestoreService.updateBoardMetadata(boardId, { isTrash: !currentTrash });
+    setBoardDocs(GcpFirestoreService.getAllBoards());
+  };
+
+  const handlePermanentDelete = async (e: React.MouseEvent, boardId: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to permanently delete this bloom? This action cannot be undone.')) return;
+    await GcpFirestoreService.deleteBoard(boardId);
+    setBoardDocs(GcpFirestoreService.getAllBoards());
   };
 
   // Helper renderer to produce polished, high-fidelity FigJam style vector card thumbnails
@@ -166,7 +201,7 @@ export const ProjectDashboard: React.FC = () => {
                 </div>
               )}
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{currentUserName?.split(' ')[0] || 'User'}</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{currentUserName || 'User'}</span>
             <ChevronDown size={15} color="#64748B" />
           </button>
 
@@ -238,18 +273,24 @@ export const ProjectDashboard: React.FC = () => {
                     position: 'relative',
                   }}
                 >
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"
-                    alt="venky"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => (e.currentTarget.style.display = 'none')}
-                  />
+                  {currentUserPhoto ? (
+                    <img
+                      src={currentUserPhoto}
+                      alt={currentUserName}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 'bold', fontSize: '24px' }}>
+                      {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
                 </div>
                 <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
-                  venky
+                  {currentUserName || 'User'}
                 </span>
                 <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 500 }}>
-                  venkatesh_konnipati@srmap.edu.in
+                  {GcpAuthService.getCurrentUser()?.email || 'user@example.com'}
                 </span>
               </div>
 
@@ -259,6 +300,10 @@ export const ProjectDashboard: React.FC = () => {
               {/* Group 1: Preferences */}
               <div style={{ padding: '4px 0' }}>
                 <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDarkMode(!isDarkMode);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -318,58 +363,6 @@ export const ProjectDashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* Divider */}
-              <div style={{ height: 1, background: '#F1F5F9', width: '100%', margin: '4px 0' }} />
-
-              {/* Group 2: Community Profile */}
-              <div style={{ padding: '4px 0' }}>
-                <button
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    width: '100%',
-                    padding: '10px 18px',
-                    background: 'transparent',
-                    border: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      background: '#3B82F6',
-                    }}
-                  >
-                    <img
-                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80"
-                      alt="venky"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
-                    <span style={{ color: '#0F172A', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      Create a community profile
-                    </span>
-                    <span style={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      venkatesh_konnipati@srmap.edu.in
-                    </span>
-                  </div>
-                </button>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: 1, background: '#F1F5F9', width: '100%', margin: '4px 0' }} />
-
               {/* Group 3: Account Actions */}
               <div style={{ padding: '4px 0 0 0' }}>
                 <button
@@ -397,8 +390,8 @@ export const ProjectDashboard: React.FC = () => {
                     e.currentTarget.style.color = '#334155';
                   }}
                 >
-                  <Plus size={18} />
-                  <span>Add account</span>
+                  <Users size={18} />
+                  <span>Switch accounts</span>
                 </button>
 
                 <button
@@ -489,7 +482,7 @@ export const ProjectDashboard: React.FC = () => {
                   borderRadius: 8,
                   border: 'none',
                   background: isActive ? '#EEF2FF' : 'transparent',
-                  color: isActive ? '#4F46E5' : '#475569',
+                  color: isActive ? '#4F46E5' : '#64748B',
                   fontSize: '0.875rem',
                   fontWeight: isActive ? 600 : 500,
                   cursor: 'pointer',
@@ -515,14 +508,14 @@ export const ProjectDashboard: React.FC = () => {
               gap: 12,
               background: 'transparent',
               border: 'none',
-              color: '#475569',
+              color: '#64748B',
               fontSize: '0.875rem',
               fontWeight: 500,
               padding: '6px 8px',
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#0F172A')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#475569')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#64748B')}
           >
             <Settings size={18} color="#64748B" />
             <span>Settings</span>
@@ -569,7 +562,7 @@ export const ProjectDashboard: React.FC = () => {
 
         {/* Section Heading */}
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 500, color: '#475569', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 500, color: '#64748B', letterSpacing: '-0.01em' }}>
             Continue where you left off.
           </h2>
         </div>
@@ -613,9 +606,36 @@ export const ProjectDashboard: React.FC = () => {
 
               {/* Card Metadata Footer */}
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', fontFamily: 'Outfit' }}>
-                  {board.title}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', fontFamily: 'Outfit' }}>
+                    {board.title}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={(e) => handleToggleStar(e, board.id, board.isStarred || false)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: board.isStarred ? '#EAB308' : '#94A3B8' }}
+                      title={board.isStarred ? 'Unstar' : 'Star'}
+                    >
+                      <Star size={16} fill={board.isStarred ? '#EAB308' : 'none'} />
+                    </button>
+                    {activeNav === 'trash' && (
+                      <button
+                        onClick={(e) => handlePermanentDelete(e, board.id)}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#EF4444', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center' }}
+                        title="Permanently Delete"
+                      >
+                        Delete Forever
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => handleToggleTrash(e, board.id, board.isTrash || false)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: board.isTrash ? '#EF4444' : '#94A3B8' }}
+                      title={board.isTrash ? 'Restore' : 'Move to Trash'}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>
@@ -654,7 +674,7 @@ export const ProjectDashboard: React.FC = () => {
                           borderRadius: '50%',
                           background: '#F1F5F9',
                           border: '2px solid #FFF',
-                          color: '#475569',
+                          color: '#64748B',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -709,7 +729,7 @@ export const ProjectDashboard: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#475569',
+                color: '#64748B',
               }}
             >
               <Plus size={24} />
