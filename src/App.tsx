@@ -6,7 +6,7 @@ import { ZoomDock } from './components/toolbar/ZoomDock';
 import { ProjectDashboard } from './components/dashboard/ProjectDashboard';
 import { LoginPage } from './components/auth/LoginPage';
 import { LandingPage } from './components/marketing/LandingPage';
-import { BlogPage } from './components/marketing/BlogPage';
+import { DownloadsPage } from './components/marketing/DownloadsPage';
 import { useCanvasStore } from './store/useCanvasStore';
 import { useGcpSync } from './collaboration/useGcpSync';
 import { GcpFirestoreService } from './cloud/GcpFirestoreService';
@@ -52,8 +52,8 @@ export const App: React.FC = () => {
     return <LandingPage />;
   }
   
-  if (activeView === 'blog') {
-    return <BlogPage />;
+  if (activeView === 'downloads') {
+    return <DownloadsPage />;
   }
 
   // Render Glassmorphic GCP Identity Portal

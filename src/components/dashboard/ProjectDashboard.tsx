@@ -18,9 +18,30 @@ import {
   LogOut,
 } from 'lucide-react';
 
+// Bloom mark — four overlapping petals, multiply-blended, matching logo.svg
+const BloomMark: React.FC<{ size?: number }> = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <g style={{ mixBlendMode: 'multiply' as const }}>
+      <circle cx="191" cy="330" r="90" fill="#FFFD99" />
+      <circle cx="320" cy="181" r="90" fill="#82FFCF" />
+      <circle cx="320" cy="330" r="90" fill="#8789FF" />
+      <circle cx="191" cy="181" r="90" fill="#FF99E7" />
+    </g>
+  </svg>
+);
+
+type NavId = 'recent' | 'starred' | 'shared' | 'trash';
+
+const NAV_ITEMS: { id: NavId; label: string; icon: React.ReactNode }[] = [
+  { id: 'recent', label: 'Recent', icon: <Clock size={18} /> },
+  { id: 'starred', label: 'Starred', icon: <Star size={18} /> },
+  { id: 'shared', label: 'Shared', icon: <Users size={18} /> },
+  { id: 'trash', label: 'Trash', icon: <Trash2 size={18} /> },
+];
+
 export const ProjectDashboard: React.FC = () => {
   const { openBoard, setActiveView, currentUserName, currentUserId, currentUserPhoto } = useCanvasStore();
-  const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
+  const [activeNav, setActiveNav] = useState<NavId>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [boardDocs, setBoardDocs] = useState<FirestoreBoardDocument[]>([]);
@@ -35,8 +56,6 @@ export const ProjectDashboard: React.FC = () => {
       id: doc.boardId,
       title: doc.title,
       edited: isNew ? 'Edited recently' : `Edited ${new Date(doc.updatedAt).toLocaleDateString()}`,
-      avatars: ['#4F46E5'],
-      extraAvatars: undefined as string | undefined,
       type: doc.nodeCount > 0 ? 'flow' : 'roadmap',
       thumbnailUrl: doc.thumbnailUrl,
       isStarred: doc.isStarred,
@@ -45,7 +64,7 @@ export const ProjectDashboard: React.FC = () => {
     };
   });
 
-  const filteredBoards = boards.filter(b => {
+  const filteredBoards = boards.filter((b) => {
     // Search query filter
     if (!b.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
 
@@ -62,8 +81,11 @@ export const ProjectDashboard: React.FC = () => {
     openBoard(`Untitled Board ${Math.floor(Math.random() * 10000)}`);
   };
 
-  const handleSelectBoard = async (title: string) => {
-    const boardDoc = await GcpFirestoreService.getBoardSnapshot(title);
+  const handleSelectBoard = async (boardId: string, title: string) => {
+    // NOTE: switched to looking up by boardId rather than title — titles aren't
+    // unique (two boards can share a name), so a title-based lookup could open
+    // the wrong board. Verify GcpFirestoreService.getBoardSnapshot accepts an id.
+    const boardDoc = await GcpFirestoreService.getBoardSnapshot(boardId);
     if (boardDoc && boardDoc.serializedState) {
       try {
         const nodes = JSON.parse(boardDoc.serializedState);
@@ -98,17 +120,74 @@ export const ProjectDashboard: React.FC = () => {
     setBoardDocs(GcpFirestoreService.getAllBoards());
   };
 
-  // Helper renderer to produce polished, high-fidelity FigJam style vector card thumbnails
+  // Owner avatar: real user photo/initial for the signed-in user's own boards,
+  // a neutral "shared" glyph for boards owned by someone else (we don't have
+  // the other owner's name/photo on FirestoreBoardDocument, so we don't fake one).
+  const renderOwnerAvatar = (ownerUid: string) => {
+    if (ownerUid === currentUserId) {
+      return (
+        <div
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            background: 'linear-gradient(135deg, #8789FF 0%, #FF99E7 100%)',
+            border: '2px solid #FFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 4px rgba(20,22,26,0.1)',
+          }}
+          title={currentUserName || 'You'}
+        >
+          {currentUserPhoto ? (
+            <img
+              src={currentUserPhoto}
+              alt={currentUserName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => (e.currentTarget.style.display = 'none')}
+            />
+          ) : (
+            <span style={{ color: '#FFF', fontWeight: 700, fontSize: '0.65rem' }}>
+              {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
+            </span>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: '50%',
+          background: '#F1F1F4',
+          border: '2px solid #FFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#9AA0AC',
+          boxShadow: '0 2px 4px rgba(20,22,26,0.06)',
+        }}
+        title="Shared with you"
+      >
+        <Users size={12} />
+      </div>
+    );
+  };
+
+  // Helper renderer to produce polished, high-fidelity card thumbnails
   const renderPreviewIllustration = (type: string) => {
     if (type === 'roadmap') {
       return (
-        <div style={{ width: '100%', height: 160, background: '#F8FAFC', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-          <div style={{ width: 190, height: 110, background: '#FFFFFF', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ width: 90, height: 8, background: '#E0E7FF', borderRadius: 4 }} />
+        <div style={{ width: '100%', height: 160, background: '#FAFAFB', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(20,22,26,0.04)' }}>
+          <div style={{ width: 190, height: 110, background: '#FFFFFF', borderRadius: 8, boxShadow: '0 4px 12px rgba(20,22,26,0.06)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ width: 90, height: 8, background: '#EEEEFF', borderRadius: 4 }} />
             <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-              <div style={{ flex: 1, background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: 6 }} />
-              <div style={{ flex: 1.4, background: '#E0E7FF', border: '1px solid #A5B4FC', borderRadius: 6 }} />
-              <div style={{ flex: 1, background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 6 }} />
+              <div style={{ flex: 1, background: '#FFEEFA', border: '1px solid #FF99E7', borderRadius: 6 }} />
+              <div style={{ flex: 1.4, background: '#EEEEFF', border: '1px solid #8789FF', borderRadius: 6 }} />
+              <div style={{ flex: 1, background: '#EAFFF6', border: '1px solid #82FFCF', borderRadius: 6 }} />
             </div>
           </div>
         </div>
@@ -116,45 +195,58 @@ export const ProjectDashboard: React.FC = () => {
     }
     if (type === 'flow') {
       return (
-        <div style={{ width: '100%', height: 160, background: '#F8FAFC', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-          <div style={{ width: 210, height: 110, background: '#FFFFFF', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 12 }}>
-            <div style={{ width: 48, height: 28, borderRadius: 14, background: '#C7D2FE', border: '2px solid #6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: 16, height: 4, background: '#4338CA', borderRadius: 2 }} />
+        <div style={{ width: '100%', height: 160, background: '#FAFAFB', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(20,22,26,0.04)' }}>
+          <div style={{ width: 210, height: 110, background: '#FFFFFF', borderRadius: 8, boxShadow: '0 4px 12px rgba(20,22,26,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 12 }}>
+            <div style={{ width: 48, height: 28, borderRadius: 14, background: '#EEEEFF', border: '2px solid #8789FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 16, height: 4, background: '#4C4DBF', borderRadius: 2 }} />
             </div>
-            <div style={{ width: 32, height: 2, background: '#CBD5E1' }} />
+            <div style={{ width: 32, height: 2, background: '#E2E4E9' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ width: 40, height: 24, borderRadius: 4, background: '#F1F5F9', border: '1px solid #CBD5E1' }} />
-              <div style={{ width: 40, height: 24, borderRadius: 4, background: '#F1F5F9', border: '1px solid #CBD5E1' }} />
+              <div style={{ width: 40, height: 24, borderRadius: 4, background: '#FAFAFB', border: '1px solid #E2E4E9' }} />
+              <div style={{ width: 40, height: 24, borderRadius: 4, background: '#FAFAFB', border: '1px solid #E2E4E9' }} />
             </div>
           </div>
         </div>
       );
     }
-    // API preview
+    // Fallback preview (defensive — current data never produces a third type)
     return (
-      <div style={{ width: '100%', height: 160, background: '#F8FAFC', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-        <div style={{ width: 210, height: 110, background: '#FFFFFF', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ width: '100%', height: 160, background: '#FAFAFB', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(20,22,26,0.04)' }}>
+        <div style={{ width: 210, height: 110, background: '#FFFFFF', borderRadius: 8, boxShadow: '0 4px 12px rgba(20,22,26,0.06)', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', gap: 4 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F43F5E' }} />
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B' }} />
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF99E7' }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFFD99' }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#82FFCF' }} />
           </div>
-          <div style={{ width: '80%', height: 8, background: '#E2E8F0', borderRadius: 4, marginTop: 4 }} />
-          <div style={{ width: '65%', height: 8, background: '#E2E8F0', borderRadius: 4 }} />
-          <div style={{ width: '90%', height: 8, background: '#F1F5F9', borderRadius: 4 }} />
+          <div style={{ width: '80%', height: 8, background: '#EEEEFF', borderRadius: 4, marginTop: 4 }} />
+          <div style={{ width: '65%', height: 8, background: '#EEEEFF', borderRadius: 4 }} />
+          <div style={{ width: '90%', height: 8, background: '#FAFAFB', borderRadius: 4 }} />
         </div>
       </div>
     );
   };
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', overflow: 'hidden', color: '#0F172A' }}>
+    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#FFFFFF', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', overflow: 'hidden', color: '#14161A' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+      `}</style>
+
       {/* LEFT SIDEBAR NAVIGATION */}
-      <aside style={{ width: 250, height: '100%', background: '#F8FAFC', borderRight: '1px solid rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 16px' }}>
+      <aside style={{ width: 250, height: '100%', background: '#FAFAFB', borderRight: '1px solid #EFEFF2', display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px', marginBottom: 20 }}>
+          <BloomMark size={20} />
+          <span style={{ fontFamily: '"Fraunces", serif', fontSize: '1.05rem', fontWeight: 600, letterSpacing: '-0.01em', color: '#14161A' }}>
+            Bloom
+          </span>
+        </div>
+
         {/* Profile Dropdown & Notifications Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, position: 'relative', zIndex: 100 }}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
+            aria-expanded={showProfileMenu}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -162,19 +254,19 @@ export const ProjectDashboard: React.FC = () => {
               padding: '5px 12px 5px 6px',
               borderRadius: 10,
               background: '#FFFFFF',
-              color: '#0F172A',
-              border: '1px solid #E2E8F0',
+              color: '#14161A',
+              border: '1px solid #E2E4E9',
               cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)',
+              boxShadow: '0 2px 6px rgba(20,22,26,0.04)',
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#F8FAFC';
-              e.currentTarget.style.borderColor = '#CBD5E1';
+              e.currentTarget.style.background = '#FAFAFB';
+              e.currentTarget.style.borderColor = '#D8DAE0';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = '#FFFFFF';
-              e.currentTarget.style.borderColor = '#E2E8F0';
+              e.currentTarget.style.borderColor = '#E2E4E9';
             }}
           >
             <div
@@ -183,7 +275,7 @@ export const ProjectDashboard: React.FC = () => {
                 height: 28,
                 borderRadius: '50%',
                 overflow: 'hidden',
-                background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
+                background: 'linear-gradient(135deg, #8789FF 0%, #FF99E7 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -197,13 +289,13 @@ export const ProjectDashboard: React.FC = () => {
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               ) : (
-                <div style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px' }}>
+                <div style={{ color: '#FFF', fontWeight: 700, fontSize: '14px' }}>
                   {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
                 </div>
               )}
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{currentUserName || 'User'}</span>
-            <ChevronDown size={15} color="#64748B" />
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#14161A' }}>{currentUserName || 'User'}</span>
+            <ChevronDown size={15} color="#6B7280" />
           </button>
 
           <button
@@ -217,16 +309,16 @@ export const ProjectDashboard: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#64748B',
+              color: '#6B7280',
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#EEF2FF';
-              e.currentTarget.style.color = '#4F46E5';
+              e.currentTarget.style.background = '#EEEEFF';
+              e.currentTarget.style.color = '#4C4DBF';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#64748B';
+              e.currentTarget.style.color = '#6B7280';
             }}
             title="Notifications"
           >
@@ -241,7 +333,7 @@ export const ProjectDashboard: React.FC = () => {
             />
           )}
 
-          {/* Bloom Themed Account Popover Menu */}
+          {/* Account Popover Menu */}
           {showProfileMenu && (
             <div
               style={{
@@ -250,13 +342,13 @@ export const ProjectDashboard: React.FC = () => {
                 left: 0,
                 width: 300,
                 background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                border: '1px solid #E2E4E9',
                 borderRadius: 14,
-                boxShadow: '0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.05)',
+                boxShadow: '0 16px 36px -4px rgba(20,22,26,0.12), 0 4px 12px -2px rgba(20,22,26,0.05)',
                 zIndex: 1000,
                 padding: '16px 0 8px 0',
-                fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-                color: '#0F172A',
+                fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
+                color: '#14161A',
               }}
             >
               {/* Header Profile Photo & Info */}
@@ -267,9 +359,9 @@ export const ProjectDashboard: React.FC = () => {
                     height: 64,
                     borderRadius: '50%',
                     overflow: 'hidden',
-                    background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
+                    background: 'linear-gradient(135deg, #8789FF 0%, #FF99E7 100%)',
                     marginBottom: 10,
-                    boxShadow: '0 4px 14px rgba(79, 70, 229, 0.18)',
+                    boxShadow: '0 4px 14px rgba(135,137,255,0.25)',
                     border: '2px solid #FFFFFF',
                     position: 'relative',
                   }}
@@ -282,23 +374,22 @@ export const ProjectDashboard: React.FC = () => {
                       onError={(e) => (e.currentTarget.style.display = 'none')}
                     />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 'bold', fontSize: '24px' }}>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 700, fontSize: '24px' }}>
                       {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
                     </div>
                   )}
                 </div>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#14161A', marginBottom: 2 }}>
                   {currentUserName || 'User'}
                 </span>
-                <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 500 }}>
+                <span style={{ fontSize: '0.8rem', color: '#6B7280', fontWeight: 500 }}>
                   {GcpAuthService.getCurrentUser()?.email || 'user@example.com'}
                 </span>
               </div>
 
-              {/* Divider */}
-              <div style={{ height: 1, background: '#F1F5F9', width: '100%', margin: '4px 0' }} />
+              <div style={{ height: 1, background: '#F1F1F4', width: '100%', margin: '4px 0' }} />
 
-              {/* Group 1: Preferences */}
+              {/* Group: Preferences */}
               <div style={{ padding: '4px 0' }}>
                 <button
                   style={{
@@ -317,8 +408,8 @@ export const ProjectDashboard: React.FC = () => {
                     transition: 'all 0.15s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#EEF2FF';
-                    e.currentTarget.style.color = '#4F46E5';
+                    e.currentTarget.style.background = '#EEEEFF';
+                    e.currentTarget.style.color = '#4C4DBF';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
@@ -327,10 +418,11 @@ export const ProjectDashboard: React.FC = () => {
                 >
                   <Layout size={18} />
                   <span>Change theme</span>
-                  <ChevronRight size={16} style={{ marginLeft: 'auto', color: '#94A3B8' }} />
+                  <ChevronRight size={16} style={{ marginLeft: 'auto', color: '#9AA0AC' }} />
                 </button>
 
                 <button
+                  onClick={() => setActiveView('downloads')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -347,8 +439,8 @@ export const ProjectDashboard: React.FC = () => {
                     transition: 'all 0.15s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#EEF2FF';
-                    e.currentTarget.style.color = '#4F46E5';
+                    e.currentTarget.style.background = '#EEEEFF';
+                    e.currentTarget.style.color = '#4C4DBF';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
@@ -360,7 +452,7 @@ export const ProjectDashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* Group 3: Account Actions */}
+              {/* Group: Account Actions */}
               <div style={{ padding: '4px 0 0 0' }}>
                 <button
                   style={{
@@ -379,8 +471,8 @@ export const ProjectDashboard: React.FC = () => {
                     transition: 'all 0.15s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#EEF2FF';
-                    e.currentTarget.style.color = '#4F46E5';
+                    e.currentTarget.style.background = '#EEEEFF';
+                    e.currentTarget.style.color = '#4C4DBF';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
@@ -435,7 +527,7 @@ export const ProjectDashboard: React.FC = () => {
           style={{
             width: '100%',
             height: 42,
-            background: '#4F46E5',
+            background: '#14161A',
             color: '#FFFFFF',
             borderRadius: 8,
             border: 'none',
@@ -446,12 +538,17 @@ export const ProjectDashboard: React.FC = () => {
             justifyContent: 'center',
             gap: 8,
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
             marginBottom: 24,
-            transition: 'all 0.2s',
+            transition: 'background 0.2s, transform 0.2s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#34345C';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#14161A';
+            e.currentTarget.style.transform = 'none';
+          }}
         >
           <Plus size={18} />
           <span>New Board</span>
@@ -459,17 +556,12 @@ export const ProjectDashboard: React.FC = () => {
 
         {/* Navigation Categories */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-          {[
-            { id: 'recent', label: 'Recent', icon: <Clock size={18} /> },
-            { id: 'starred', label: 'Starred', icon: <Star size={18} /> },
-            { id: 'shared', label: 'Shared', icon: <Users size={18} /> },
-            { id: 'trash', label: 'Trash', icon: <Trash2 size={18} /> },
-          ].map((item) => {
+          {NAV_ITEMS.map((item) => {
             const isActive = activeNav === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveNav(item.id as any)}
+                onClick={() => setActiveNav(item.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -478,18 +570,22 @@ export const ProjectDashboard: React.FC = () => {
                   padding: '10px 14px',
                   borderRadius: 8,
                   border: 'none',
-                  background: isActive ? '#EEF2FF' : 'transparent',
-                  color: isActive ? '#4F46E5' : '#64748B',
+                  background: isActive ? '#EEEEFF' : 'transparent',
+                  color: isActive ? '#4C4DBF' : '#6B7280',
                   fontSize: '0.875rem',
                   fontWeight: isActive ? 600 : 500,
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.15s',
                 }}
-                onMouseEnter={(e) => (!isActive && (e.currentTarget.style.background = 'rgba(0,0,0,0.04)'))}
-                onMouseLeave={(e) => (!isActive && (e.currentTarget.style.background = 'transparent'))}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.background = '#F1F1F4';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.background = 'transparent';
+                }}
               >
-                <span style={{ color: isActive ? '#4F46E5' : '#64748B' }}>{item.icon}</span>
+                <span style={{ color: isActive ? '#4C4DBF' : '#6B7280' }}>{item.icon}</span>
                 <span>{item.label}</span>
               </button>
             );
@@ -497,7 +593,7 @@ export const ProjectDashboard: React.FC = () => {
         </nav>
 
         {/* Footer Area: Settings */}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ borderTop: '1px solid #EFEFF2', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <button
             style={{
               display: 'flex',
@@ -505,16 +601,16 @@ export const ProjectDashboard: React.FC = () => {
               gap: 12,
               background: 'transparent',
               border: 'none',
-              color: '#64748B',
+              color: '#6B7280',
               fontSize: '0.875rem',
               fontWeight: 500,
               padding: '6px 8px',
               cursor: 'pointer',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#0F172A')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#64748B')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#14161A')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#6B7280')}
           >
-            <Settings size={18} color="#64748B" />
+            <Settings size={18} color="#6B7280" />
             <span>Settings</span>
           </button>
         </div>
@@ -524,77 +620,76 @@ export const ProjectDashboard: React.FC = () => {
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', padding: '36px 48px', background: '#FFFFFF' }}>
         {/* Top Header: Welcome Banner & Live Search */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", serif', fontSize: '1.6rem', fontWeight: 600, color: '#14161A', letterSpacing: '-0.02em' }}>
             Welcome back, {currentUserName ? currentUserName.split(' ')[0] : 'User'}.
           </h1>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ position: 'relative', width: 280 }}>
-              <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                type="text"
-                placeholder="Search boards..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: 40,
-                  paddingLeft: 38,
-                  paddingRight: 16,
-                  borderRadius: 8,
-                  border: '1px solid #E2E8F0',
-                  background: '#FFFFFF',
-                  fontSize: '0.875rem',
-                  color: '#0F172A',
-                  outline: 'none',
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = '#4F46E5')}
-                onBlur={(e) => (e.currentTarget.style.borderColor = '#E2E8F0')}
-              />
-            </div>
+          <div style={{ position: 'relative', width: 280 }}>
+            <Search size={16} color="#9AA0AC" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              placeholder="Search boards..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                height: 40,
+                paddingLeft: 38,
+                paddingRight: 16,
+                borderRadius: 8,
+                border: '1px solid #E2E4E9',
+                background: '#FFFFFF',
+                fontSize: '0.875rem',
+                color: '#14161A',
+                outline: 'none',
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#8789FF')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = '#E2E4E9')}
+            />
           </div>
         </div>
 
-        <div style={{ height: 1, background: '#F1F5F9', width: '100%', marginBottom: 32 }} />
+        <div style={{ height: 1, background: '#F1F1F4', width: '100%', marginBottom: 32 }} />
 
         {/* Section Heading */}
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 500, color: '#64748B', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 500, color: '#6B7280', letterSpacing: '-0.01em' }}>
             Continue where you left off.
           </h2>
         </div>
 
-        {/* Responsive Grid of Collaborative Workspace Boards */}
+        {/* Responsive Grid of Boards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 24 }}>
           {filteredBoards.map((board) => (
             <div
               key={board.id}
-              onClick={() => handleSelectBoard(board.title)}
+              onClick={() => handleSelectBoard(board.id, board.title)}
               style={{
                 background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                border: '1px solid #E2E4E9',
                 borderRadius: 12,
                 overflow: 'hidden',
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
+                boxShadow: '0 2px 6px rgba(20,22,26,0.02)',
                 display: 'flex',
                 flexDirection: 'column',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.08)';
-                e.currentTarget.style.borderColor = '#CBD5E1';
+                e.currentTarget.style.boxShadow = '0 12px 24px rgba(20,22,26,0.08)';
+                e.currentTarget.style.borderColor = '#CBCED6';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.02)';
-                e.currentTarget.style.borderColor = '#E2E8F0';
+                e.currentTarget.style.boxShadow = '0 2px 6px rgba(20,22,26,0.02)';
+                e.currentTarget.style.borderColor = '#E2E4E9';
               }}
             >
               {/* Graphic Preview Illustration */}
               {board.thumbnailUrl ? (
-                <div style={{ width: '100%', height: 160, background: '#F1F5F9', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: 160, background: '#F1F1F4', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src={board.thumbnailUrl} alt={board.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               ) : (
@@ -604,13 +699,13 @@ export const ProjectDashboard: React.FC = () => {
               {/* Card Metadata Footer */}
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', fontFamily: 'Outfit' }}>
+                  <span style={{ fontFamily: '"Fraunces", serif', fontSize: '0.95rem', fontWeight: 600, color: '#14161A' }}>
                     {board.title}
                   </span>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button
                       onClick={(e) => handleToggleStar(e, board.id, board.isStarred || false)}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: board.isStarred ? '#EAB308' : '#94A3B8' }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: board.isStarred ? '#EAB308' : '#9AA0AC', display: 'flex' }}
                       title={board.isStarred ? 'Unstar' : 'Star'}
                     >
                       <Star size={16} fill={board.isStarred ? '#EAB308' : 'none'} />
@@ -618,16 +713,16 @@ export const ProjectDashboard: React.FC = () => {
                     {activeNav === 'trash' && (
                       <button
                         onClick={(e) => handlePermanentDelete(e, board.id)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#EF4444', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center' }}
-                        title="Permanently Delete"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#EF4444', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center' }}
+                        title="Permanently delete"
                       >
                         Delete Forever
                       </button>
                     )}
                     <button
                       onClick={(e) => handleToggleTrash(e, board.id, board.isTrash || false)}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: board.isTrash ? '#EF4444' : '#94A3B8' }}
-                      title={board.isTrash ? 'Restore' : 'Move to Trash'}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: board.isTrash ? '#EF4444' : '#9AA0AC', display: 'flex' }}
+                      title={board.isTrash ? 'Restore' : 'Move to trash'}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -635,67 +730,22 @@ export const ProjectDashboard: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>
+                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 500 }}>
                     {board.edited}
                   </span>
-
-                  {/* Collaborative Peers Bubbles */}
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {board.avatars.map((color, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          background: color,
-                          border: '2px solid #FFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.65rem',
-                          color: '#FFF',
-                          fontWeight: 700,
-                          marginLeft: idx > 0 ? -6 : 0,
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        }}
-                      >
-                        V
-                      </div>
-                    ))}
-                    {board.extraAvatars && (
-                      <div
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          background: '#F1F5F9',
-                          border: '2px solid #FFF',
-                          color: '#64748B',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.6rem',
-                          fontWeight: 700,
-                          marginLeft: -6,
-                        }}
-                      >
-                        {board.extraAvatars}
-                      </div>
-                    )}
-                  </div>
+                  {renderOwnerAvatar(board.ownerUid)}
                 </div>
               </div>
             </div>
           ))}
 
-          {/* Special "Create New Board" Dashed Card */}
+          {/* "Create New Board" Dashed Card */}
           <div
             onClick={handleCreateNew}
             style={{
               minHeight: 250,
               background: 'transparent',
-              border: '2px dashed rgba(0, 0, 0, 0.15)',
+              border: '2px dashed #D8DAE0',
               borderRadius: 14,
               display: 'flex',
               flexDirection: 'column',
@@ -707,12 +757,12 @@ export const ProjectDashboard: React.FC = () => {
               padding: 20,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#4F46E5';
-              e.currentTarget.style.background = 'rgba(79, 70, 229, 0.02)';
+              e.currentTarget.style.borderColor = '#8789FF';
+              e.currentTarget.style.background = '#FAFAFF';
               e.currentTarget.style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.borderColor = '#D8DAE0';
               e.currentTarget.style.background = 'transparent';
               e.currentTarget.style.transform = 'none';
             }}
@@ -722,11 +772,11 @@ export const ProjectDashboard: React.FC = () => {
                 width: 48,
                 height: 48,
                 borderRadius: 10,
-                background: '#F1F5F9',
+                background: '#F1F1F4',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64748B',
+                color: '#6B7280',
               }}
             >
               <Plus size={24} />

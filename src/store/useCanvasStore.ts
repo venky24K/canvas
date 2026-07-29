@@ -10,9 +10,9 @@ interface HistorySnapshot {
 
 interface CanvasState {
   // Application View Mode (Login Auth Portal vs Dashboard Workspace vs Interactive Drawing Studio)
-  activeView: 'landing' | 'blog' | 'login' | 'dashboard' | 'canvas';
+  activeView: 'landing' | 'downloads' | 'login' | 'dashboard' | 'canvas';
   boardTitle: string;
-  setActiveView: (view: 'landing' | 'blog' | 'login' | 'dashboard' | 'canvas') => void;
+  setActiveView: (view: 'landing' | 'downloads' | 'login' | 'dashboard' | 'canvas') => void;
   setBoardTitle: (title: string) => void;
   openBoard: (title: string, nodes?: CanvasNode[]) => void;
 
@@ -82,10 +82,10 @@ interface CanvasState {
   exportSceneJson: () => string;
 }
 
-const getInitialView = (): 'landing' | 'blog' | 'login' | 'dashboard' | 'canvas' => {
+const getInitialView = (): 'landing' | 'downloads' | 'login' | 'dashboard' | 'canvas' => {
   if (typeof window !== 'undefined') {
     const cachedView = localStorage.getItem('bloom_active_view');
-    if (cachedView === 'dashboard' || cachedView === 'canvas' || cachedView === 'landing' || cachedView === 'blog') {
+    if (cachedView === 'dashboard' || cachedView === 'canvas' || cachedView === 'landing' || cachedView === 'downloads') {
       return cachedView as any;
     }
   }
