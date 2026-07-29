@@ -52,6 +52,8 @@ interface CanvasState {
   setPan: (pan: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
   toggleGrid: () => void;
   toggleSnapping: () => void;
+  captureThumbnail?: () => Promise<void>;
+  registerThumbnailCapture: (fn: () => Promise<void>) => void;
   updateDefaultStyles: (updates: Partial<StyleProperties & { fontSize: number; fontFamily: string }>) => void;
   
   // Node Manipulation Actions
@@ -184,6 +186,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     onlineCount: 1,
     presenterId: null,
   },
+
+  captureThumbnail: undefined,
+  registerThumbnailCapture: (fn) => set({ captureThumbnail: fn }),
 
   setUserIdentity: (uid, name, color, photo) => set({
     currentUserId: uid,

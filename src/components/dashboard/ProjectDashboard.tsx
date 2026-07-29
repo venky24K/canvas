@@ -48,8 +48,18 @@ export const ProjectDashboard: React.FC = () => {
     openBoard('Untitled Board');
   };
 
-  const handleSelectBoard = (title: string) => {
-    openBoard(title);
+  const handleSelectBoard = async (title: string) => {
+    const boardDoc = await GcpFirestoreService.getBoardSnapshot(title);
+    if (boardDoc && boardDoc.serializedState) {
+      try {
+        const nodes = JSON.parse(boardDoc.serializedState);
+        openBoard(title, nodes);
+      } catch (e) {
+        openBoard(title);
+      }
+    } else {
+      openBoard(title);
+    }
   };
 
   // Helper renderer to produce polished, high-fidelity FigJam style vector card thumbnails

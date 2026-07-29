@@ -29,6 +29,7 @@ export const InfiniteStage: React.FC = () => {
     deleteSelected,
     boardTitle,
     currentUserId,
+    registerThumbnailCapture,
   } = useCanvasStore();
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export const InfiniteStage: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Periodic background thumbnail capture (every 30s)
+  // Periodic background thumbnail capture (every 30s) and registration
   useEffect(() => {
     const captureThumbnail = async () => {
       if (!stageRef.current) return;
@@ -57,9 +58,13 @@ export const InfiniteStage: React.FC = () => {
       }
     };
 
+    registerThumbnailCapture(captureThumbnail);
     const interval = setInterval(captureThumbnail, 30000);
-    return () => clearInterval(interval);
-  }, [boardTitle, currentUserId]);
+    return () => {
+      clearInterval(interval);
+      registerThumbnailCapture(async () => {});
+    };
+  }, [boardTitle, currentUserId, registerThumbnailCapture]);
 
   // Mouse wheel zoom centered on cursor coordinates
   const handleWheel = (e: any) => {

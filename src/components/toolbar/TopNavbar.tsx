@@ -197,7 +197,9 @@ export const TopNavbar: React.FC = () => {
             >
               {/* Top Action: Return to files / main workspace */}
               <button
-                onClick={() => {
+                onClick={async () => {
+                  const { captureThumbnail } = useCanvasStore.getState();
+                  if (captureThumbnail) await captureThumbnail();
                   setActiveView('dashboard');
                   setShowMenu(false);
                 }}
@@ -260,7 +262,9 @@ export const TopNavbar: React.FC = () => {
                     }}
                   >
                     <button
-                      onClick={() => {
+                      onClick={async () => {
+                        const { captureThumbnail } = useCanvasStore.getState();
+                        if (captureThumbnail) await captureThumbnail();
                         setActiveView('dashboard');
                         setShowMenu(false);
                       }}
