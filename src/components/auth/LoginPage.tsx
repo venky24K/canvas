@@ -18,18 +18,27 @@ const BloomMark: React.FC<{ size?: number }> = ({ size = 32 }) => (
 export const LoginPage: React.FC = () => {
   const { setActiveView, setUserIdentity } = useCanvasStore();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     setIsAuthenticating(true);
+    setAuthError(null);
     try {
       const profile = await GcpAuthService.signInWithGoogle();
       setUserIdentity(profile.uid, profile.displayName, profile.avatarColor, profile.photoURL);
       setTimeout(() => {
         setActiveView('dashboard');
       }, 400);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sign in error:', err);
       setIsAuthenticating(false);
+      
+      // Provide a friendly error message for unauthorized domains
+      if (err.code === 'auth/unauthorized-domain') {
+        setAuthError('This domain is not authorized for OAuth. Please add it in the Firebase Console.');
+      } else {
+        setAuthError(err.message || 'Authentication failed. Please try again.');
+      }
     }
   };
 
@@ -119,6 +128,23 @@ export const LoginPage: React.FC = () => {
         >
           Your canvas is waiting.
         </p>
+
+        {authError && (
+          <div style={{
+            width: '100%',
+            padding: '12px',
+            marginBottom: '24px',
+            background: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            borderRadius: '8px',
+            color: '#DC2626',
+            fontSize: '0.85rem',
+            lineHeight: 1.4,
+            textAlign: 'center'
+          }}>
+            {authError}
+          </div>
+        )}
 
         <button
           onClick={handleGoogleSignIn}

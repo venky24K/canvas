@@ -135,6 +135,7 @@ class GcpAuthServiceClass {
         return profile;
       } catch (error: any) {
         console.warn('⚠️ [GCP OAuth Notice] Popup closed or domain awaiting console authorization. Using tokenized fallback:', error.message);
+        throw error; // Throw the error so the UI can display it
       }
     }
 
