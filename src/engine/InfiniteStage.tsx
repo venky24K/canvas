@@ -27,6 +27,8 @@ export const InfiniteStage: React.FC = () => {
     addNode,
     updateNode,
     deleteSelected,
+    boardTitle,
+    currentUserId,
   } = useCanvasStore();
 
   useEffect(() => {
@@ -36,6 +38,28 @@ export const InfiniteStage: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Periodic background thumbnail capture (every 30s)
+  useEffect(() => {
+    const captureThumbnail = async () => {
+      if (!stageRef.current) return;
+      try {
+        const dataUrl = stageRef.current.toDataURL({ pixelRatio: 0.5, mimeType: 'image/jpeg', quality: 0.7 });
+        const { GcpStorageService } = await import('../cloud/GcpStorageService');
+        const { GcpFirestoreService } = await import('../cloud/GcpFirestoreService');
+        const url = await GcpStorageService.uploadBoardThumbnail(dataUrl, boardTitle);
+        if (url) {
+          const currentNodes = useCanvasStore.getState().nodes;
+          await GcpFirestoreService.saveBoardSnapshot(boardTitle, boardTitle, Object.values(currentNodes), currentUserId, url);
+        }
+      } catch (e) {
+        console.warn('Failed to capture background thumbnail:', e);
+      }
+    };
+
+    const interval = setInterval(captureThumbnail, 30000);
+    return () => clearInterval(interval);
+  }, [boardTitle, currentUserId]);
 
   // Mouse wheel zoom centered on cursor coordinates
   const handleWheel = (e: any) => {

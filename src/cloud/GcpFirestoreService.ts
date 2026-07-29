@@ -14,6 +14,7 @@ export interface FirestoreBoardDocument {
   nodeCount: number;
   serializedState: string; // Compressed JSON scene representation
   cloudStatus: 'synced' | 'syncing' | 'offline_cached';
+  thumbnailUrl?: string; // Optional Google Cloud Storage thumbnail URI
 }
 
 class GcpFirestoreServiceClass {
@@ -35,7 +36,7 @@ class GcpFirestoreServiceClass {
   }
 
   // Save latest scene state to Google Cloud Firestore (/rooms/{boardId})
-  public async saveBoardSnapshot(boardId: string, title: string, nodes: CanvasNode[], ownerUid: string): Promise<FirestoreBoardDocument> {
+  public async saveBoardSnapshot(boardId: string, title: string, nodes: CanvasNode[], ownerUid: string, thumbnailUrl?: string): Promise<FirestoreBoardDocument> {
     const existing = this.localCache.get(boardId);
     const newVersion = existing ? existing.version + 1 : 1;
     
@@ -50,6 +51,10 @@ class GcpFirestoreServiceClass {
       serializedState: JSON.stringify(nodes),
       cloudStatus: 'synced',
     };
+
+    if (thumbnailUrl || existing?.thumbnailUrl) {
+      boardDoc.thumbnailUrl = thumbnailUrl || existing?.thumbnailUrl;
+    }
 
     // Save to high-speed local memory & browser offline storage
     this.localCache.set(boardId, boardDoc);

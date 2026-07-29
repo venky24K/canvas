@@ -11,7 +11,7 @@ export const LoginPage: React.FC = () => {
     setIsAuthenticating(true);
     try {
       const profile = await GcpAuthService.signInWithGoogle();
-      setUserIdentity(profile.uid, profile.displayName, profile.avatarColor);
+      setUserIdentity(profile.uid, profile.displayName, profile.avatarColor, profile.photoURL);
       setTimeout(() => {
         setActiveView('dashboard');
       }, 400);

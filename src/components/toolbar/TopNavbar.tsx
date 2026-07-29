@@ -15,6 +15,7 @@ export const TopNavbar: React.FC = () => {
     cursors,
     currentUserName,
     currentUserColor,
+    currentUserPhoto,
     boardTitle,
     nodeIds,
     setBoardTitle,
@@ -701,24 +702,28 @@ export const TopNavbar: React.FC = () => {
           ))}
           <div
             style={{
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               borderRadius: '50%',
               background: currentUserColor || '#4F46E5',
-              border: '2px solid #FFF',
+              backgroundImage: currentUserPhoto ? `url(${currentUserPhoto})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              color: '#FFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.75rem',
+              fontSize: '0.85rem',
               fontWeight: 700,
-              color: '#FFF',
-              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
+              boxShadow: `0 0 0 2px #FFFFFF, 0 4px 12px ${currentUserColor || '#4F46E5'}60`,
+              zIndex: 10,
+              cursor: 'pointer',
+              border: '2px solid #FFF',
               marginLeft: -6,
-              cursor: 'default',
             }}
             title={`You (${currentUserName})`}
           >
-            {(currentUserName || 'Venky').charAt(0).toUpperCase()}
+            {!currentUserPhoto && (currentUserName || 'Venky').charAt(0).toUpperCase()}
           </div>
         </div>
 

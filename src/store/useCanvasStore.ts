@@ -43,6 +43,7 @@ interface CanvasState {
   currentUserId: string;
   currentUserName: string;
   currentUserColor: string;
+  currentUserPhoto?: string;
   room: RoomState;
 
   // Actions
@@ -67,7 +68,7 @@ interface CanvasState {
   updateRemoteCursor: (cursor: CollaborativeCursor) => void;
   removeRemoteCursor: (userId: string) => void;
   setRoomStatus: (status: Partial<RoomState>) => void;
-  setUserIdentity: (uid: string, name: string, color: string) => void;
+  setUserIdentity: (uid: string, name: string, color: string, photo?: string) => void;
   
   // Remote Peer Socket Merging (Without local re-broadcasting)
   mergeRemoteNode: (node: CanvasNode) => void;
@@ -174,6 +175,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   currentUserId: 'gcp-usr-venky',
   currentUserName: 'Venky (Lead Owner)',
   currentUserColor: '#4F46E5',
+  currentUserPhoto: undefined,
   room: {
     roomId: 'studio-gcp-prod-room',
     roomName: 'Bloom Studio Workspace',
@@ -183,10 +185,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     presenterId: null,
   },
 
-  setUserIdentity: (uid, name, color) => set({
+  setUserIdentity: (uid, name, color, photo) => set({
     currentUserId: uid,
     currentUserName: name,
     currentUserColor: color,
+    currentUserPhoto: photo,
   }),
 
   // HISTORY RECORDING & TIME TRAVEL ACTIONS

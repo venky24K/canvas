@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { GcpAuthService, type GcpUserProfile } from '../../cloud/GcpAuthService';
-import { UserCheck, Wifi, LogOut, Sparkles } from 'lucide-react';
+import { GcpStorageService } from '../../cloud/GcpStorageService';
+import { UserCheck, Wifi, LogOut, Sparkles, Upload } from 'lucide-react';
 import { useCanvasStore } from '../../store/useCanvasStore';
 
 interface GcpProfileModalProps {
@@ -12,11 +13,27 @@ interface GcpProfileModalProps {
 export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClose }) => {
   const { setActiveView } = useCanvasStore();
   const [currentUser, setCurrentUser] = useState<GcpUserProfile>(GcpAuthService.getCurrentUser());
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSignOut = async () => {
     await GcpAuthService.signOut();
     onClose();
     setActiveView('login');
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const url = await GcpStorageService.uploadProfilePicture(file, currentUser.uid);
+      if (url) {
+        await GcpAuthService.updateProfilePicture(url);
+      }
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   useEffect(() => {
@@ -136,11 +153,15 @@ export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClos
             }}
           >
             <div
+              onClick={() => fileInputRef.current?.click()}
               style={{
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
                 background: currentUser.avatarColor || '#6366F1',
+                backgroundImage: currentUser.photoURL ? `url(${currentUser.photoURL})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 color: '#FFF',
                 display: 'flex',
                 alignItems: 'center',
@@ -150,10 +171,26 @@ export const GcpProfileModal: React.FC<GcpProfileModalProps> = ({ isOpen, onClos
                 boxShadow: `0 4px 14px ${currentUser.avatarColor || '#6366F1'}40`,
                 border: '3px solid #FFF',
                 flexShrink: 0,
+                cursor: 'pointer',
+                position: 'relative',
+                overflow: 'hidden',
               }}
+              title="Click to update profile picture"
             >
-              {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
+              {!currentUser.photoURL && (currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U')}
+              {isUploading && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Upload size={16} color="#FFF" />
+                </div>
+              )}
             </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleAvatarUpload}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>

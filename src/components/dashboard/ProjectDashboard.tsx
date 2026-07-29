@@ -141,14 +141,20 @@ export const ProjectDashboard: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80"
-                alt="venky"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
+              {currentUser.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt={currentUser.displayName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+              ) : (
+                <div style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px' }}>
+                  {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>venky</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{currentUser.displayName?.split(' ')[0] || 'User'}</span>
             <ChevronDown size={15} color="#64748B" />
           </button>
 
@@ -585,7 +591,13 @@ export const ProjectDashboard: React.FC = () => {
               }}
             >
               {/* Graphic Preview Illustration */}
-              {renderPreviewIllustration(board.type)}
+              {board.thumbnailUrl ? (
+                <div style={{ width: '100%', height: 160, background: '#F1F5F9', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src={board.thumbnailUrl} alt={board.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ) : (
+                renderPreviewIllustration(board.type)
+              )}
 
               {/* Card Metadata Footer */}
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>

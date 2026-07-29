@@ -3,6 +3,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyBrYjnM8b7868C-Z2tmzo51kSLMPaq6bAY',
@@ -16,11 +17,13 @@ export const firebaseConfig = {
 export let firebaseApp: FirebaseApp | null = null;
 export let firebaseAuth: Auth | null = null;
 export let firestoreDb: Firestore | null = null;
+export let firebaseStorage: FirebaseStorage | null = null;
 
 try {
   firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
   firebaseAuth = getAuth(firebaseApp);
   firestoreDb = getFirestore(firebaseApp);
+  firebaseStorage = getStorage(firebaseApp);
 } catch (error) {
   console.warn('⚠️ [GCP / Firebase] SDK Initialization notice (falling back to sandbox evaluation):', error);
 }

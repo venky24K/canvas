@@ -166,6 +166,23 @@ class GcpAuthServiceClass {
     this.currentUser = GCP_EVAL_PROFILES[0];
     this.notifyListeners();
   }
+
+  public async updateProfilePicture(photoURL: string): Promise<void> {
+    this.currentUser = { ...this.currentUser, photoURL };
+    
+    // Update live Firebase auth profile if active
+    if (firebaseAuth && firebaseAuth.currentUser) {
+      try {
+        const { updateProfile } = await import('firebase/auth');
+        await updateProfile(firebaseAuth.currentUser, { photoURL });
+        console.log('✅ [GCP Identity Engine] Synced profile picture to Firebase Auth');
+      } catch (e) {
+        console.warn('⚠️ [GCP Identity Engine] Failed to sync profile picture to Firebase Auth:', e);
+      }
+    }
+    
+    this.notifyListeners();
+  }
 }
 
 export const GcpAuthService = new GcpAuthServiceClass();
