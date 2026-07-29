@@ -85,6 +85,7 @@ export const InfiniteStage: React.FC = () => {
 
     const oldScale = zoom;
     const pointer = stage.getPointerPosition();
+    if (!pointer) return;
 
     const mousePointTo = {
       x: (pointer.x - pan.x) / oldScale,
@@ -106,7 +107,9 @@ export const InfiniteStage: React.FC = () => {
     if (e.evt.button === 1 || activeTool === 'hand') return;
 
     const stage = e.target.getStage();
+    if (!stage) return;
     const pointer = stage.getRelativePointerPosition();
+    if (!pointer) return;
 
     if (activeTool === 'select') {
       // If clicked empty canvas, clear selection and start selection box
@@ -171,6 +174,7 @@ export const InfiniteStage: React.FC = () => {
         zIndex: 0, // Frame background
         isLocked: false,
         fillColor: '#FFFFFF',
+        fillOpacity: 1,
         strokeColor: '#CBD5E1',
         strokeWidth: 2,
         cornerRadius: 16,
@@ -200,6 +204,9 @@ export const InfiniteStage: React.FC = () => {
         zIndex: nodeIds.length + 1,
         isLocked: false,
         fillColor: defaultStyles.fillColor === '#EEF2FF' ? '#0F172A' : (defaultStyles.fillColor || '#0F172A'),
+        fillOpacity: 1,
+        strokeColor: 'transparent',
+        strokeWidth: 0,
       };
       addNode(newText);
       setTool('select');
@@ -222,6 +229,8 @@ export const InfiniteStage: React.FC = () => {
         startPoint: { x: pointer.x - 120, y: pointer.y },
         endPoint: { x: pointer.x + 120, y: pointer.y - 40 },
         arrowType: 'curved',
+        fillColor: 'transparent',
+        fillOpacity: 1,
         strokeColor: defaultStyles.fillColor === '#EEF2FF' ? '#0EA5E9' : (defaultStyles.fillColor || '#0EA5E9'),
         strokeWidth: Math.max(3, defaultStyles.strokeWidth || 4),
       };
@@ -278,7 +287,9 @@ export const InfiniteStage: React.FC = () => {
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
+    if (!stage) return;
     const pointer = stage.getRelativePointerPosition();
+    if (!pointer) return;
 
     if (selectionBox?.visible) {
       setSelectionBox({
