@@ -13,7 +13,7 @@ import { GcpFirestoreService } from './cloud/GcpFirestoreService';
 import { firebaseAuth } from './cloud/firebaseConfig';
 
 export const App: React.FC = () => {
-  const { activeView, openBoard, setActiveView, setUserIdentity } = useCanvasStore();
+  const { activeView, openBoard, setActiveView } = useCanvasStore();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

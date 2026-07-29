@@ -8,7 +8,6 @@ import {
   Star,
   Users,
   Trash2,
-  Settings,
   Search,
   Bell,
   ChevronDown,
@@ -272,7 +271,9 @@ export const ProjectDashboard: React.FC = () => {
             width: '100%',
             background: '#FAFAFB',
             borderBottom: '1px solid #EFEFF2',
-            WebkitAppRegion: 'drag' as any,
+            ...({
+              WebkitAppRegion: 'drag',
+            } as React.CSSProperties),
             userSelect: 'none',
             flexShrink: 0,
           }}
