@@ -84,12 +84,17 @@ interface CanvasState {
 
 const getInitialView = (): 'landing' | 'downloads' | 'login' | 'dashboard' | 'canvas' => {
   if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'login') {
+      return 'login';
+    }
+
     const cachedView = localStorage.getItem('bloom_active_view');
-    if (cachedView === 'dashboard' || cachedView === 'canvas' || cachedView === 'landing' || cachedView === 'downloads') {
-      return cachedView as any;
+    if (cachedView === 'canvas' || cachedView === 'dashboard') {
+      return cachedView;
     }
   }
-  return 'landing';
+  return 'dashboard';
 };
 
 const getInitialBoardTitle = (): string => {

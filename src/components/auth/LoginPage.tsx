@@ -25,6 +25,14 @@ export const LoginPage: React.FC = () => {
     setAuthError(null);
     try {
       const profile = await GcpAuthService.signInWithGoogle();
+      
+      const isDesktopAuth = new URLSearchParams(window.location.search).get('desktop_auth') === 'true';
+      if (isDesktopAuth) {
+        const payload = btoa(JSON.stringify(profile));
+        window.location.href = `bloom://auth?data=${payload}`;
+        return;
+      }
+
       setUserIdentity(profile.uid, profile.displayName, profile.avatarColor, profile.photoURL);
       setTimeout(() => {
         setActiveView('dashboard');

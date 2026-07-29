@@ -13,7 +13,7 @@ import { GcpFirestoreService } from './cloud/GcpFirestoreService';
 import { firebaseAuth } from './cloud/firebaseConfig';
 
 export const App: React.FC = () => {
-  const { activeView, openBoard } = useCanvasStore();
+  const { activeView, openBoard, setActiveView, setUserIdentity } = useCanvasStore();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,6 +43,37 @@ export const App: React.FC = () => {
       }
     }
   }, []);
+
+  // Handle Desktop Deep Links (bloom://)
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI) {
+      // Force user off marketing pages
+      if (activeView === 'landing' || activeView === 'downloads') {
+        setActiveView('dashboard');
+      }
+
+      electronAPI.onDeepLink((url: string) => {
+        try {
+          const urlObj = new URL(url);
+          if (urlObj.hostname === 'auth' && urlObj.searchParams.has('data')) {
+            const dataBase64 = urlObj.searchParams.get('data')!;
+            const decoded = atob(dataBase64);
+            const profile = JSON.parse(decoded);
+            setUserIdentity(profile.uid, profile.displayName, profile.avatarColor, profile.photoURL);
+            setActiveView('dashboard');
+          }
+        } catch (e) {
+          console.error('Failed to parse deep link auth payload:', e);
+        }
+      });
+    } else {
+      // Also force off marketing pages even if not in electron
+      if (activeView === 'landing' || activeView === 'downloads') {
+        setActiveView('dashboard');
+      }
+    }
+  }, [activeView, setActiveView, setUserIdentity]);
 
   // Initialize GCP Cloud Run & Real-time Multiplayer Sync
   useGcpSync();

@@ -222,6 +222,40 @@ export const ProjectDashboard: React.FC = () => {
     );
   };
 
+  const isDesktop = typeof window !== 'undefined' && !!(window as any).electronAPI;
+  const isDefaultUser = currentUserId === 'gcp-usr-venky';
+
+  if (isDesktop && isDefaultUser) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', background: '#FAFAFB', fontFamily: '"Inter", sans-serif' }}>
+        <BloomMark size={64} />
+        <h1 style={{ fontFamily: '"Fraunces", serif', fontSize: '2rem', marginTop: 24, color: '#14161A' }}>Welcome to Bloom Desktop</h1>
+        <p style={{ color: '#6B7280', marginBottom: 32, fontSize: '1.1rem' }}>Please authenticate to access your workspaces and sync your boards.</p>
+        <button
+          onClick={() => {
+            const url = window.location.hostname === 'localhost' 
+              ? 'http://localhost:5173/?view=login&desktop_auth=true'
+              : 'https://bloom-app-1022228413582.asia-southeast1.run.app/?view=login&desktop_auth=true';
+            (window as any).electronAPI.openExternal(url);
+          }}
+          style={{
+            padding: '12px 24px',
+            background: '#14161A',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: 12,
+            fontSize: '1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(20,22,26,0.1)'
+          }}
+        >
+          Login on Web
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#FFFFFF', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', overflow: 'hidden', color: '#14161A' }}>
       <style>{`
