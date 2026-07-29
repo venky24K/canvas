@@ -161,9 +161,11 @@ io.on('connection', (socket) => {
   // 1. Initialize Room Document if not already existing
   if (!roomDocs.has(room)) {
     roomDocs.set(room, {
-      title: 'Collaborative Design Studio',
+      title: room,
       nodes: {},
       updatedAt: new Date().toISOString(),
+      ownerUid: userEmail,
+      acl: [],
     });
   }
 

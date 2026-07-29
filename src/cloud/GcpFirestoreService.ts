@@ -45,7 +45,7 @@ class GcpFirestoreServiceClass {
     const boardDoc: FirestoreBoardDocument = {
       boardId,
       title,
-      ownerUid,
+      ownerUid: existing ? existing.ownerUid : ownerUid,
       createdAt: existing ? existing.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       version: newVersion,

@@ -21,6 +21,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
   const [inviteEmail, setInviteEmail] = useState('');
   const [copied, setCopied] = useState(false);
   const [anyoneRole, setAnyoneRole] = useState<'can view' | 'can edit' | 'no access'>('can view');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [invitedMembers, setInvitedMembers] = useState<AccessMember[]>([]);
 
   // Fetch real members from backend on open
@@ -134,9 +135,11 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
           width: '100%',
           maxWidth: 520,
           background: '#FFFFFF',
-          borderRadius: 20,
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden',
+          borderRadius: 16,
+          boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
+          overflow: 'visible',
+          display: 'flex',
+          flexDirection: 'column',
           color: '#0F172A',
           animation: 'modalFadeIn 0.15s ease-out',
         }}
@@ -151,7 +154,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
           }}
         >
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A' }}>
-            Share this board
+            Share this bloom
           </span>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -293,35 +296,93 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
                 >
                   <Globe size={22} color="#0F172A" />
                 </div>
-                <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
-                  Anyone
-                </span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
+                    Anyone
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>
+                    anyone with this link
+                  </span>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={toggleAnyoneRole}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: anyoneRole === 'no access' ? '#94A3B8' : '#0F172A',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  borderRadius: 6,
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                title="Click to toggle access permissions"
-              >
-                <span>{anyoneRole}</span>
-                <ChevronRight size={14} color="#0F172A" />
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'transparent',
+                    border: '1.5px solid #2563EB',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: '#0F172A',
+                    cursor: 'pointer',
+                    padding: '4px 8px 4px 12px',
+                    borderRadius: 8,
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#F0F9FF')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span>{anyoneRole}</span>
+                  <ChevronRight 
+                    size={14} 
+                    color="#0F172A" 
+                    style={{ 
+                      transform: showRoleDropdown ? 'rotate(90deg)' : 'rotate(0deg)', 
+                      transition: 'transform 0.15s' 
+                    }} 
+                  />
+                </button>
+
+                {showRoleDropdown && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: 4,
+                      width: 140,
+                      background: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: 8,
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                      zIndex: 10,
+                      padding: 4,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    {['can view', 'can edit', 'no access'].map((role) => (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          setAnyoneRole(role as any);
+                          setShowRoleDropdown(false);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '8px 12px',
+                          textAlign: 'left',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          color: '#0F172A',
+                          borderRadius: 4,
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Owner / You row */}

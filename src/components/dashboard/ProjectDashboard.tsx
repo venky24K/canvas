@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export const ProjectDashboard: React.FC = () => {
-  const { openBoard, setActiveView, currentUserName, currentUserPhoto } = useCanvasStore();
+  const { openBoard, setActiveView, currentUserName, currentUserId, currentUserPhoto } = useCanvasStore();
   const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -51,14 +51,14 @@ export const ProjectDashboard: React.FC = () => {
     // Sidebar navigation filter
     if (activeNav === 'starred') return b.isStarred && !b.isTrash;
     if (activeNav === 'trash') return b.isTrash;
-    if (activeNav === 'shared') return false; // Mock shared for now
+    if (activeNav === 'shared') return b.ownerUid !== currentUserId && !b.isTrash;
 
-    // Recent filter (default) excludes trash
-    return !b.isTrash;
+    // Recent filter (default) excludes trash and shared boards that belong to someone else
+    return !b.isTrash && b.ownerUid === currentUserId;
   });
 
   const handleCreateNew = () => {
-    openBoard('Untitled Board');
+    openBoard(`Untitled Board ${Math.floor(Math.random() * 10000)}`);
   };
 
   const handleSelectBoard = async (title: string) => {
@@ -300,10 +300,6 @@ export const ProjectDashboard: React.FC = () => {
               {/* Group 1: Preferences */}
               <div style={{ padding: '4px 0' }}>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDarkMode(!isDarkMode);
-                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -527,8 +523,8 @@ export const ProjectDashboard: React.FC = () => {
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', padding: '36px 48px', background: '#FFFFFF' }}>
         {/* Top Header: Welcome Banner & Live Search */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0F172A', letterSpacing: '-0.01em' }}>
-            Welcome back, venky.
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.5px' }}>
+            Welcome back, {currentUserName ? currentUserName.split(' ')[0] : 'User'}.
           </h1>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

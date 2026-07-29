@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { InfiniteStage } from './engine/InfiniteStage';
 import { TopNavbar } from './components/toolbar/TopNavbar';
 import { FloatingToolDock } from './components/toolbar/FloatingToolDock';
@@ -9,9 +9,40 @@ import { LandingPage } from './components/marketing/LandingPage';
 import { BlogPage } from './components/marketing/BlogPage';
 import { useCanvasStore } from './store/useCanvasStore';
 import { useGcpSync } from './collaboration/useGcpSync';
+import { GcpFirestoreService } from './cloud/GcpFirestoreService';
+import { firebaseAuth } from './cloud/firebaseConfig';
 
 export const App: React.FC = () => {
-  const { activeView } = useCanvasStore();
+  const { activeView, openBoard } = useCanvasStore();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    if (room && activeView !== 'canvas') {
+      const fetchBoard = () => {
+        GcpFirestoreService.getBoardSnapshot(room).then((boardDoc) => {
+          if (boardDoc && boardDoc.serializedState) {
+            try {
+              openBoard(room, JSON.parse(boardDoc.serializedState));
+            } catch {
+              openBoard(room);
+            }
+          } else {
+            openBoard(room);
+          }
+        });
+      };
+
+      if (firebaseAuth) {
+        const unsubscribe = firebaseAuth.onAuthStateChanged(() => {
+          fetchBoard();
+          unsubscribe();
+        });
+      } else {
+        fetchBoard();
+      }
+    }
+  }, []);
 
   // Initialize GCP Cloud Run & Real-time Multiplayer Sync
   useGcpSync();

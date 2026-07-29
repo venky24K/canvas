@@ -21,6 +21,7 @@ export const useGcpSync = () => {
     mergeRemoteNodeUpdate,
     mergeRemoteDeletion,
     loadScene,
+    boardTitle,
   } = useCanvasStore();
 
   // 1. Subscribe to GCP Identity Platform profile alterations
@@ -35,7 +36,7 @@ export const useGcpSync = () => {
   useEffect(() => {
     let socket: Socket | null = null;
     const urlRoom = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('room') : null;
-    const activeRoomId = urlRoom || 'bloom-gcp-prod-room';
+    const activeRoomId = boardTitle || urlRoom || 'bloom-gcp-prod-room';
 
     try {
       socket = io(GCP_CLOUD_RUN_SOCKET_URL, {
@@ -106,6 +107,6 @@ export const useGcpSync = () => {
         setGcpSocket(null);
       }
     };
-  }, [currentUserId, currentUserName, currentUserColor, setRoomStatus, updateRemoteCursor, removeRemoteCursor, mergeRemoteNode, mergeRemoteNodeUpdate, mergeRemoteDeletion, loadScene]);
+  }, [boardTitle, currentUserId, currentUserName, currentUserColor, setRoomStatus, updateRemoteCursor, removeRemoteCursor, mergeRemoteNode, mergeRemoteNodeUpdate, mergeRemoteDeletion, loadScene]);
 };
 
