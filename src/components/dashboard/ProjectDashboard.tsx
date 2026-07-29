@@ -41,6 +41,7 @@ export const ProjectDashboard: React.FC = () => {
       thumbnailUrl: doc.thumbnailUrl,
       isStarred: doc.isStarred,
       isTrash: doc.isTrash,
+      ownerUid: doc.ownerUid,
     };
   });
 

@@ -92,11 +92,6 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
     }
   };
 
-  const toggleAnyoneRole = () => {
-    if (anyoneRole === 'can view') setAnyoneRole('can edit');
-    else if (anyoneRole === 'can edit') setAnyoneRole('no access');
-    else setAnyoneRole('can view');
-  };
 
   const toggleMemberRole = (index: number) => {
     setInvitedMembers((prev) =>
