@@ -1,6 +1,6 @@
 # Architecture Blueprint: Bloom Collaborative Studio (Figma × Excalidraw Hybrid)
 
-This document delineates the software architecture, design patterns, data structure specifications, and rendering pipeline of **Bloom**, an enterprise-grade real-time collaborative UX design and freehand sketching studio engineered for Frontend R&D evaluation.
+This document delineates the software architecture, design patterns, data structure specifications, multi-platform execution models, and rendering pipeline of **Bloom**, an enterprise-grade real-time collaborative UX design and freehand sketching studio.
 
 ---
 
@@ -10,20 +10,36 @@ Bloom solves a long-standing UX division in modern product design software: the 
 
 ### Core Architectural Drivers:
 1. **Zero-Latency Rendering Pipeline:** Leveraging GPU-accelerated HTML5 Canvas via `Konva.js` and React Fiber reconciler optimization (`react-konva`).
-2. **Deterministic State & Time-Travel Synchronization:** A decoupled data model managed by lightweight reactive observables (`Zustand`) equipped with an atomic rolling history buffer and CRDT-ready WebSocket serialization.
-3. **Cloud-Native Backbone (Google Cloud Platform):** Real-time persistent state engines running on **Google Cloud Run**, scalable asset caching via **Google Cloud Storage (GCS)**, and persistent document metadata on **Google Cloud Firestore**.
+2. **Hybrid Cross-Platform Runtime:** Unified React codebase executing seamlessly across both standard web browsers and a native desktop environment via **Electron**.
+3. **Web-to-Desktop Deep Link Authentication:** Intercepts custom `bloom://` system protocols to seamlessly pass secure GCP OAuth tokens from browser auth handlers directly into the Electron main process.
+4. **Deterministic State & Time-Travel Synchronization:** Decoupled data model managed by Zustand with atomic rolling history buffers and CRDT-ready real-time synchronization.
+5. **Cloud-Native Backbone (Google Cloud Platform):** Firebase / GCP Identity Platform for authentication, **Google Cloud Firestore** for real-time document persistence, and **Google Cloud Storage (GCS)** for asset hosting.
 
 ---
 
-## 2. High-Level Data Flow & View Navigation
+## 2. High-Level Data Flow & Cross-Platform Routing
 
-Bloom utilizes a multi-view reactive routing state (`activeView: 'landing' | 'blog' | 'login' | 'dashboard' | 'canvas'`) allowing users to switch fluidly between the marketing site, high-level project management, and immersive canvas creation.
+Bloom utilizes a multi-view reactive routing state (`activeView: 'landing' | 'downloads' | 'login' | 'dashboard' | 'canvas'`) with platform-aware initialization guards:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                              BLOOM CLIENT                              │
+│                               WEB BROWSER                              │
+│   ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐   │
+│   │   Landing Page   │ ──>│ Google Auth Flow │ ──>│ Web Dashboard  │   │
+│   └──────────────────┘    └────────┬─────────┘    └────────────────┘   │
+└────────────────────────────────────┼───────────────────────────────────┘
+                                     │ OAuth Token Payload (bloom://auth?data=...)
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          ELECTRON DESKTOP APP                          │
 │                                                                        │
 │   ┌────────────────────────────────────────────────────────────────┐   │
+│   │                 Main Process (electron/main.ts)                │   │
+│   │   - Protocol Handler (`bloom://`)                              │   │
+│   │   - Custom Native Frameless Drag Titlebar Region               │   │
+│   └──────────────────────────────┬─────────────────────────────────┘   │
+│                                  │ IPC `deep-link` Event               │
+│   ┌──────────────────────────────▼─────────────────────────────────┐   │
 │   │             Zustand Reactive Store & History Stack             │   │
 │   └───────────────▲──────────────────────────────▲─────────────────┘   │
 │                   │                              │                     │
@@ -34,15 +50,28 @@ Bloom utilizes a multi-view reactive routing state (`activeView: 'landing' | 'bl
 │   │ (FigJam Dock / Hotkey Engine)│       │  (WebGL / 2D Canvas)    │   │
 │   └──────────────────────────────┘       └─────────────────────────┘   │
 └───────────────────────────────────▲────────────────────────────────────┘
-                                    │ WebSockets (JSON Diff & Cursors)
+                                    │ WebSockets / Firestore Realtime Sync
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│                    GCP CLOUD RUN PERSISTENT SERVER                     │
+│                  GOOGLE CLOUD PLATFORM / FIRESTORE                     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Platform Routing Behavior Matrix:
+- **Web Runtime**: Defaults to the interactive `landing` page for unauthenticated sessions. Validates real Firebase authentication before permitting access to `dashboard` or `canvas`.
+- **Desktop Runtime (Electron)**: Automatically bypasses marketing pages (`landing`, `downloads`) to present the `dashboard` or a minimal Web-Login prompt that launches external browser authentication.
+
 ---
 
-## 3. Core Data Schema (The Scene Graph & History)
+## 3. Desktop Subsystem Architecture (`/electron`)
+
+### Main Process (`electron/main.ts`)
+- **Custom Protocol Handling**: Registers `bloom://` as a single-instance system protocol scheme. Intercepts incoming deep links (on macOS `open-url` and Windows `second-instance`) and buffers payload events until the renderer window completes loading (`did-finish-load`).
+- **Frameless Window Integration**: Configured with `titleBarStyle: 'hiddenInset'` to present macOS native window traffic lights cleanly alongside a custom top drag region (`WebkitAppRegion: 'drag'`).
+- **Preload Isolation**: `electron/preload.ts` exposes a sandboxed `window.electronAPI` bridge using `contextBridge` compiled specifically as CommonJS (`cjs`) to adhere to Electron execution constraints.
+
+---
+
+## 4. Core Data Schema (The Scene Graph & History)
 
 Every visual item on the infinite canvas is represented as a polymorphic vector or stroke node (`CanvasNode`). This immutable schema guarantees serialization fidelity and effortless atomic history snapshot recording.
 
@@ -86,7 +115,7 @@ export interface HistorySnapshot {
 
 ---
 
-## 4. Subsystem Components
+## 5. Subsystem Components
 
 ### A. Rendering & Grid Engine (`/src/engine`)
 * **`InfiniteStage.tsx`**: Governs global transformation matrices, handling multi-touch gestures, space-bar panning, mouse wheel zoom (ranging from `20%` to `500%`), and viewport boundary recalculations. Implements infinite CSS grid backgrounds (Dot Matrix, Blueprint Lines) for 60 FPS performance without Konva DOM node overhead.
@@ -103,6 +132,6 @@ To avoid state duplication during high-frequency mouse events:
 
 ---
 
-## 5. Collaboration Security & State Serialization
+## 6. Collaboration & State Synchronization
 
-All real-time message broadcasting goes through JSON schema validation to prevent malformed node payloads from polluting room state. Exported JSON scene packages preserve complete layer hierarchies and design tokens for clean team handoffs. Collaborative sharing workflows (via `ShareBoardModal` integrated into the `TopNavbar`) streamline secure backend-backed link distribution.
+All real-time message broadcasting goes through JSON schema validation to prevent malformed node payloads from polluting room state. Exported JSON scene packages preserve complete layer hierarchies and design tokens for clean team handoffs. Collaborative sharing workflows (via `ShareBoardModal` integrated into the `TopNavbar`) streamline secure GCP Firestore link distribution.
