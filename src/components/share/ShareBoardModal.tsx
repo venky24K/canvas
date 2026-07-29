@@ -100,7 +100,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
   const toggleMemberRole = (index: number) => {
     setInvitedMembers((prev) =>
       prev.map((m, i) =>
-        i === index ? { ...m, role: m.role === 'can edit' ? 'can view' : 'can edit' } : m
+        i === index ? { ...m, role: m.role === 'editor' ? 'viewer' : 'editor' } : m
       )
     );
   };
@@ -426,7 +426,7 @@ export const ShareBoardModal: React.FC<ShareBoardModalProps> = ({ isOpen, onClos
                     onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <span>{member.role}</span>
+                    <span>{member.role === 'editor' ? 'can edit' : 'can view'}</span>
                     <ChevronRight size={14} color="#0F172A" />
                   </button>
 

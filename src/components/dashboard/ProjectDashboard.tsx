@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export const ProjectDashboard: React.FC = () => {
-  const { openBoard, setActiveView } = useCanvasStore();
+  const { openBoard, setActiveView, currentUserName, currentUserPhoto } = useCanvasStore();
   const [activeNav, setActiveNav] = useState<'recent' | 'starred' | 'shared' | 'trash'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -141,20 +141,20 @@ export const ProjectDashboard: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              {currentUser.photoURL ? (
+              {currentUserPhoto ? (
                 <img
-                  src={currentUser.photoURL}
-                  alt={currentUser.displayName}
+                  src={currentUserPhoto}
+                  alt={currentUserName}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               ) : (
                 <div style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px' }}>
-                  {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
+                  {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
                 </div>
               )}
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{currentUser.displayName?.split(' ')[0] || 'User'}</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{currentUserName?.split(' ')[0] || 'User'}</span>
             <ChevronDown size={15} color="#64748B" />
           </button>
 
