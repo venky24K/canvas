@@ -17,7 +17,7 @@ Bloom solves a long-standing UX division in modern product design software: the 
 
 ## 2. High-Level Data Flow & View Navigation
 
-Bloom utilizes a dual-view reactive routing state (`activeView: 'dashboard' | 'canvas'`) allowing users to switch fluidly between high-level project management and immersive canvas creation.
+Bloom utilizes a multi-view reactive routing state (`activeView: 'landing' | 'blog' | 'login' | 'dashboard' | 'canvas'`) allowing users to switch fluidly between the marketing site, high-level project management, and immersive canvas creation.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -105,4 +105,4 @@ To avoid state duplication during high-frequency mouse events:
 
 ## 5. Collaboration Security & State Serialization
 
-All real-time message broadcasting goes through JSON schema validation to prevent malformed node payloads from polluting room state. Exported JSON scene packages preserve complete layer hierarchies and design tokens for clean team handoffs.
+All real-time message broadcasting goes through JSON schema validation to prevent malformed node payloads from polluting room state. Exported JSON scene packages preserve complete layer hierarchies and design tokens for clean team handoffs. Collaborative sharing workflows (via `ShareBoardModal` integrated into the `TopNavbar`) streamline secure backend-backed link distribution.

@@ -12,17 +12,22 @@
 
 ## ✨ Signature Features
 
-### 1. Main Workspace Project Dashboard
+### 1. Marketing & Landing Site
+* **Conversion-Optimized Landing Page:** Engaging product introduction highlighting Bloom's core capabilities, featuring a stunning hero section and clear call-to-action.
+* **Integrated Blog:** A modern marketing blog structure to showcase updates, tutorials, and design resources, seamlessly integrated into the application routing state.
+
+### 2. Main Workspace Project Dashboard
 * **Enterprise FigJam Workflow:** Upon opening Bloom, evaluators and creators are greeted by a clean, light-mode Workspace Dashboard (*Nexus / Main Workspace*).
 * **Organized Folders & Filtering:** Effortlessly navigate between *Recent*, *Starred*, *Shared*, and *Trash* workspaces, equipped with real-time title search and interactive card grids.
 * **Instant Creation & Switching:** Click **`+ New Board`** or select an existing project (such as *Product Roadmap Q3*, *User Persona Flow*, or *API Architecture*) to transition seamlessly into the full-screen drawing studio.
+* **Dashboard Caching & Session Persistence:** Smart `localStorage` integration persists your current session state and active view, ensuring you don't lose context on page refresh. Full sign-out functionality securely manages session data.
 
-### 2. GPU-Accelerated Hybrid Canvas Studio
+### 3. GPU-Accelerated Hybrid Canvas Studio
 * **Infinite Stage:** High-performance, 60 FPS viewport rendering built on React-Konva WebGL & 2D Context engines.
 * **Smart Grid Modes:** Switch effortlessly between clean **Dot Matrix**, **Blueprint Grid Lines**, or an unobstructed **Blank Slate Studio** with responsive zooming from **20% to 500%**.
 * **Zero Mock Data:** Built as a genuine production canvas—no simulated bots or hardcoded demo cards cluttering your active workspaces.
 
-### 3. FigJam-Style Floating Capsule Dock & Inline Controls
+### 4. FigJam-Style Floating Capsule Dock & Inline Controls
 * **4 Organized Functional Pods:**
   1. **Navigation:** Select (`V`), Pan Hand (`H`)
   2. **UI/UX Vector Container Pod:** Artboard Screen Frames (`F`), Rectangle UI Boxes (`R`), Ellipse Badges (`O`), Connector Arrows (`A`)
@@ -34,11 +39,11 @@
   * **`L` (20px)** – Bold Drawing Brush
   * **`XL` (36px)** – Heavy Poster Ink
 
-### 4. Time-Travel Undo & Redo History Engine
+### 5. Time-Travel Undo & Redo History Engine
 * **Atomic Snapshot Buffer:** Zustand state machine maintains an intelligent 30-checkpoint timeline, capturing snapshots only after completed user actions or finished stylus ink strokes.
 * **Double-Click Free Recovery:** Single-click recovery via on-screen curved Undo/Redo arrows or industry-standard shortcuts (**`Cmd/Ctrl + Z`** to Undo, **`Cmd/Ctrl + Shift + Z`** or **`Ctrl + Y`** to Redo).
 
-### 5. Cloud-Native Multiplayer Sync (GCP Ready)
+### 6. Cloud-Native Multiplayer Sync (GCP Ready)
 * **Live WebSockets:** Powered by an Express & Socket.IO sync server ready for zero-config container scaling on **Google Cloud Run**.
 * **Live Multiplayer Peer Avatars:** Watch teammates collaborate in real-time with vibrant color-coded cursor arrows and typing indicators.
 
