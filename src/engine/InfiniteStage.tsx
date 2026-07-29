@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Stage, Layer, Circle, Text, Group, Line } from 'react-konva';
+import { Stage, Layer, Circle, Text, Group, Line, Rect } from 'react-konva';
 import { useCanvasStore } from '../store/useCanvasStore';
 import { NodeRenderer } from './NodeRenderer';
 import type { FreehandNode, ShapeNode, StickyNode } from '../types/canvas';
@@ -9,6 +9,8 @@ export const InfiniteStage: React.FC = () => {
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStrokeId, setCurrentStrokeId] = useState<string | null>(null);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [selectionBox, setSelectionBox] = useState<{ startX: number; startY: number; endX: number; endY: number; visible: boolean } | null>(null);
 
   const {
     nodes,
@@ -23,6 +25,7 @@ export const InfiniteStage: React.FC = () => {
     currentUserName,
     setZoom,
     setPan,
+    setTool,
     setSelectedIds,
     addNode,
     updateNode,
@@ -105,9 +108,16 @@ export const InfiniteStage: React.FC = () => {
     const pointer = stage.getRelativePointerPosition();
 
     if (activeTool === 'select') {
-      // If clicked empty canvas, clear selection
+      // If clicked empty canvas, clear selection and start selection box
       if (e.target === stage) {
         setSelectedIds([]);
+        setSelectionBox({
+          startX: pointer.x,
+          startY: pointer.y,
+          endX: pointer.x,
+          endY: pointer.y,
+          visible: true,
+        });
       }
       return;
     }
@@ -133,9 +143,9 @@ export const InfiniteStage: React.FC = () => {
         isLocked: false,
         points: [[pointer.x, pointer.y, 0.5]],
         smoothing: 0.5,
-        fillColor: activeTool === 'highlighter' ? '#FDE047' : chosenColor,
+        fillColor: chosenColor,
         fillOpacity: 1,
-        strokeColor: activeTool === 'highlighter' ? '#FDE047' : chosenColor,
+        strokeColor: chosenColor,
         strokeWidth: activeTool === 'highlighter' ? Math.max(20, chosenWidth * 2) : chosenWidth,
         isHighlighter: activeTool === 'highlighter',
       };
@@ -144,6 +154,7 @@ export const InfiniteStage: React.FC = () => {
     }
 
     if (activeTool === 'artboard') {
+      if (e.target !== stage) return;
       const newArtboard: any = {
         id: `artboard-${Date.now()}`,
         type: 'artboard',
@@ -164,10 +175,12 @@ export const InfiniteStage: React.FC = () => {
         cornerRadius: 16,
       };
       addNode(newArtboard);
+      setTool('select');
       return;
     }
 
     if (activeTool === 'text') {
+      if (e.target !== stage) return;
       const newText: any = {
         id: `text-${Date.now()}`,
         type: 'text',
@@ -188,10 +201,12 @@ export const InfiniteStage: React.FC = () => {
         fillColor: defaultStyles.fillColor === '#EEF2FF' ? '#0F172A' : (defaultStyles.fillColor || '#0F172A'),
       };
       addNode(newText);
+      setTool('select');
       return;
     }
 
     if (activeTool === 'arrow') {
+      if (e.target !== stage) return;
       const newArrow: any = {
         id: `arrow-${Date.now()}`,
         type: 'arrow',
@@ -210,10 +225,12 @@ export const InfiniteStage: React.FC = () => {
         strokeWidth: Math.max(3, defaultStyles.strokeWidth || 4),
       };
       addNode(newArrow);
+      setTool('select');
       return;
     }
 
     if (activeTool === 'rectangle' || activeTool === 'ellipse') {
+      if (e.target !== stage) return;
       const newShape: ShapeNode = {
         id: `${activeTool}-${Date.now()}`,
         type: activeTool,
@@ -230,10 +247,12 @@ export const InfiniteStage: React.FC = () => {
         strokeWidth: defaultStyles.strokeWidth || 4,
       };
       addNode(newShape);
+      setTool('select');
       return;
     }
 
     if (activeTool === 'sticky') {
+      if (e.target !== stage) return;
       const newSticky: StickyNode = {
         id: `sticky-${Date.now()}`,
         type: 'sticky',
@@ -251,14 +270,25 @@ export const InfiniteStage: React.FC = () => {
         ...defaultStyles,
       };
       addNode(newSticky);
+      setTool('select');
       return;
     }
   };
 
   const handleMouseMove = (e: any) => {
-    if (!isDrawing || !currentStrokeId) return;
     const stage = e.target.getStage();
     const pointer = stage.getRelativePointerPosition();
+
+    if (selectionBox?.visible) {
+      setSelectionBox({
+        ...selectionBox,
+        endX: pointer.x,
+        endY: pointer.y,
+      });
+      return;
+    }
+
+    if (!isDrawing || !currentStrokeId) return;
 
     const currentStroke = nodes[currentStrokeId] as FreehandNode;
     if (currentStroke) {
@@ -269,6 +299,39 @@ export const InfiniteStage: React.FC = () => {
   };
 
   const handleMouseUp = () => {
+    if (selectionBox?.visible) {
+      const minX = Math.min(selectionBox.startX, selectionBox.endX);
+      const maxX = Math.max(selectionBox.startX, selectionBox.endX);
+      const minY = Math.min(selectionBox.startY, selectionBox.endY);
+      const maxY = Math.max(selectionBox.startY, selectionBox.endY);
+
+      // Only select if the box has a minimum size to avoid tiny accidental clicks
+      if (maxX - minX > 5 && maxY - minY > 5) {
+        const newSelectedIds = nodeIds.filter((id) => {
+          const node = nodes[id];
+          if (!node) return false;
+          
+          const nodeMinX = node.x;
+          const nodeMaxX = node.x + (node.width || 0);
+          const nodeMinY = node.y;
+          const nodeMaxY = node.y + (node.height || 0);
+
+          return (
+            nodeMinX < maxX &&
+            nodeMaxX > minX &&
+            nodeMinY < maxY &&
+            nodeMaxY > minY
+          );
+        });
+
+        if (newSelectedIds.length > 0) {
+          setSelectedIds(newSelectedIds);
+        }
+      }
+      setSelectionBox(null);
+      return;
+    }
+
     if (isDrawing) {
       setIsDrawing(false);
       setCurrentStrokeId(null);
@@ -357,11 +420,28 @@ export const InfiniteStage: React.FC = () => {
                     setSelectedIds([selectedId]);
                   }
                 }}
+                isEditing={editingNodeId === id}
+                onDoubleClick={(id) => setEditingNodeId(id)}
                 onChange={(updatedId, updates) => updateNode(updatedId, updates)}
               />
             );
           })}
         </Layer>
+
+        {/* Layer for Selection Box */}
+        {selectionBox?.visible && (
+          <Layer>
+            <Rect
+              x={Math.min(selectionBox.startX, selectionBox.endX)}
+              y={Math.min(selectionBox.startY, selectionBox.endY)}
+              width={Math.abs(selectionBox.endX - selectionBox.startX)}
+              height={Math.abs(selectionBox.endY - selectionBox.startY)}
+              fill="rgba(135, 137, 255, 0.15)"
+              stroke="#8789FF"
+              strokeWidth={1}
+            />
+          </Layer>
+        )}
 
         {/* Layer 2: Real-time Live Multiplayer Cursors */}
         <Layer>
@@ -393,6 +473,47 @@ export const InfiniteStage: React.FC = () => {
           ))}
         </Layer>
       </Stage>
+
+      {/* HTML Overlay for Text Editing */}
+      {editingNodeId && nodes[editingNodeId] && (nodes[editingNodeId].type === 'text' || nodes[editingNodeId].type === 'sticky') && (
+        <textarea
+          autoFocus
+          defaultValue={nodes[editingNodeId].text || ''}
+          onBlur={(e) => {
+            updateNode(editingNodeId, { text: e.target.value });
+            setEditingNodeId(null);
+          }}
+          onKeyDown={(e) => {
+            // Cmd/Ctrl + Enter to save and exit edit mode
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.currentTarget.blur();
+            }
+          }}
+          style={{
+            position: 'absolute',
+            top: nodes[editingNodeId].y * zoom + pan.y + (nodes[editingNodeId].type === 'sticky' ? 24 * zoom : 0),
+            left: nodes[editingNodeId].x * zoom + pan.x + (nodes[editingNodeId].type === 'sticky' ? 24 * zoom : 0),
+            width: (nodes[editingNodeId].width || 200) * zoom - (nodes[editingNodeId].type === 'sticky' ? 48 * zoom : 0),
+            height: (nodes[editingNodeId].height || 100) * zoom - (nodes[editingNodeId].type === 'sticky' ? 48 * zoom : 0),
+            fontSize: ((nodes[editingNodeId] as any).fontSize || 20) * zoom,
+            fontFamily: (nodes[editingNodeId] as any).fontFamily || 'Outfit',
+            fontWeight: (nodes[editingNodeId] as any).fontWeight || '600',
+            color: nodes[editingNodeId].type === 'sticky' ? '#1E293B' : (nodes[editingNodeId].fillColor || '#FFF'),
+            background: 'transparent',
+            border: 'none',
+            outline: '2px solid #8789FF',
+            resize: 'none',
+            overflow: 'hidden',
+            zIndex: 1000,
+            padding: 0,
+            margin: 0,
+            lineHeight: 1.3,
+            transformOrigin: 'top left',
+            // if sticky, account for rotation roughly or just set rotation
+            transform: `rotate(${nodes[editingNodeId].rotation || 0}deg)`,
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -82,11 +82,28 @@ export const TopNavbar: React.FC = () => {
     reader.readAsText(file);
   };
 
+  const handleNewBoard = async () => {
+    // Was previously a copy-paste of "Back to files" (navigated to the dashboard
+    // instead of creating anything). Now actually creates and opens a fresh board,
+    // matching ProjectDashboard's handleCreateNew.
+    const { captureThumbnail, openBoard } = useCanvasStore.getState();
+    if (captureThumbnail) await captureThumbnail();
+    openBoard(`Untitled Board ${Math.floor(Math.random() * 10000)}`);
+    setShowMenu(false);
+  };
+
+  const handleBackToFiles = async () => {
+    const { captureThumbnail } = useCanvasStore.getState();
+    if (captureThumbnail) await captureThumbnail();
+    setActiveView('dashboard');
+    setShowMenu(false);
+  };
+
   const handleShare = () => {
     setShowShareModal(true);
   };
 
-  // Helper styles for FigJam Dark Menu UI
+  // Shared styles for the floating menu
   const menuItemStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
@@ -107,7 +124,7 @@ export const TopNavbar: React.FC = () => {
     fontSize: '0.75rem',
     color: '#888888',
     fontWeight: 500,
-    fontFamily: 'JetBrains Mono, monospace',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     marginLeft: 16,
   };
 
@@ -116,6 +133,8 @@ export const TopNavbar: React.FC = () => {
     background: '#383838',
     margin: '6px 0',
   };
+
+  const SUBMENU_TOP_OFFSET = -8;
 
   return (
     <div
@@ -140,8 +159,8 @@ export const TopNavbar: React.FC = () => {
           padding: '6px 14px 6px 10px',
           background: '#FFFFFF',
           borderRadius: 12,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(20, 22, 26, 0.08)',
+          boxShadow: '0 2px 10px rgba(20, 22, 26, 0.08)',
           pointerEvents: 'auto',
           position: 'relative',
         }}
@@ -157,24 +176,24 @@ export const TopNavbar: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              background: showMenu ? 'rgba(0,0,0,0.06)' : 'transparent',
+              background: showMenu ? 'rgba(20,22,26,0.06)' : 'transparent',
               border: 'none',
               padding: '4px 8px',
               borderRadius: 8,
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
-            title="Bloom Main Menu"
+            title="Bloom main menu"
           >
             <img
               src="/logo.svg"
-              alt="Bloom Logo"
+              alt="Bloom logo"
               style={{ width: 26, height: 26, objectFit: 'contain', borderRadius: 6 }}
             />
             <ChevronDown size={15} color="#475569" style={{ transform: showMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
 
-          {/* FIGJAM STYLE DARK OBSIDIAN FLOATING MAIN MENU */}
+          {/* Floating dark menu */}
           {showMenu && (
             <div
               style={{
@@ -191,18 +210,13 @@ export const TopNavbar: React.FC = () => {
                 zIndex: 110,
                 display: 'flex',
                 flexDirection: 'column',
-                fontFamily: 'Inter, system-ui, sans-serif',
+                fontFamily: '"Inter", system-ui, sans-serif',
               }}
               onMouseLeave={() => setActiveSubmenu(null)}
             >
-              {/* Top Action: Return to files / main workspace */}
+              {/* Top action: return to the dashboard */}
               <button
-                onClick={async () => {
-                  const { captureThumbnail } = useCanvasStore.getState();
-                  if (captureThumbnail) await captureThumbnail();
-                  setActiveView('dashboard');
-                  setShowMenu(false);
-                }}
+                onClick={handleBackToFiles}
                 style={menuItemStyle}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#363636';
@@ -215,7 +229,7 @@ export const TopNavbar: React.FC = () => {
 
               <div style={separatorStyle} />
 
-              {/* Quick Actions Search row */}
+              {/* Quick actions search row */}
               <button
                 style={{ ...menuItemStyle, color: '#A0A0A0' }}
                 onMouseEnter={(e) => {
@@ -234,9 +248,7 @@ export const TopNavbar: React.FC = () => {
 
               <div style={separatorStyle} />
 
-              {/* CATEGORIES WITH HOVER SUB-MENUS */}
-              
-              {/* FILE CATEGORY */}
+              {/* FILE */}
               <div style={{ position: 'relative' }}>
                 <button
                   style={{ ...menuItemStyle, background: activeSubmenu === 'file' ? '#363636' : 'transparent' }}
@@ -250,7 +262,7 @@ export const TopNavbar: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      top: -4,
+                      top: SUBMENU_TOP_OFFSET,
                       left: 232,
                       width: 230,
                       background: '#242424',
@@ -262,12 +274,7 @@ export const TopNavbar: React.FC = () => {
                     }}
                   >
                     <button
-                      onClick={async () => {
-                        const { captureThumbnail } = useCanvasStore.getState();
-                        if (captureThumbnail) await captureThumbnail();
-                        setActiveView('dashboard');
-                        setShowMenu(false);
-                      }}
+                      onClick={handleNewBoard}
                       style={menuItemStyle}
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -294,21 +301,11 @@ export const TopNavbar: React.FC = () => {
                       <span style={menuShortcutStyle}>⌘I</span>
                       <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
                     </label>
-                    <div style={separatorStyle} />
-                    <button
-                      onClick={() => setShowMenu(false)}
-                      style={{ ...menuItemStyle, color: '#10B981' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <span>Save to Cloud Storage</span>
-                      <span style={menuShortcutStyle}>☁ Connected</span>
-                    </button>
                   </div>
                 )}
               </div>
 
-              {/* EDIT CATEGORY (Matches user screenshot exactly!) */}
+              {/* EDIT */}
               <div style={{ position: 'relative' }}>
                 <button
                   style={{ ...menuItemStyle, background: activeSubmenu === 'edit' ? '#363636' : 'transparent' }}
@@ -322,7 +319,7 @@ export const TopNavbar: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      top: -12,
+                      top: SUBMENU_TOP_OFFSET,
                       left: 232,
                       width: 220,
                       background: '#242424',
@@ -363,7 +360,7 @@ export const TopNavbar: React.FC = () => {
                     </button>
                     <button
                       onClick={() => { deleteSelected(); setShowMenu(false); }}
-                      style={{ ...menuItemStyle, color: '#F43F5E' }}
+                      style={{ ...menuItemStyle, color: '#EF4444' }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
@@ -393,7 +390,7 @@ export const TopNavbar: React.FC = () => {
                 )}
               </div>
 
-              {/* VIEW CATEGORY */}
+              {/* VIEW */}
               <div style={{ position: 'relative' }}>
                 <button
                   style={{ ...menuItemStyle, background: activeSubmenu === 'view' ? '#363636' : 'transparent' }}
@@ -407,7 +404,7 @@ export const TopNavbar: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      top: -12,
+                      top: SUBMENU_TOP_OFFSET,
                       left: 232,
                       width: 230,
                       background: '#242424',
@@ -424,7 +421,7 @@ export const TopNavbar: React.FC = () => {
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span>Toggle Grid Matrix ({gridType})</span>
+                      <span>Toggle grid ({gridType})</span>
                       <span style={menuShortcutStyle}>⌘G</span>
                     </button>
                     <div style={separatorStyle} />
@@ -434,7 +431,7 @@ export const TopNavbar: React.FC = () => {
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span>Zoom In</span>
+                      <span>Zoom in</span>
                       <span style={menuShortcutStyle}>⌘+</span>
                     </button>
                     <button
@@ -443,7 +440,7 @@ export const TopNavbar: React.FC = () => {
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span>Zoom Out</span>
+                      <span>Zoom out</span>
                       <span style={menuShortcutStyle}>⌘-</span>
                     </button>
                     <button
@@ -459,7 +456,7 @@ export const TopNavbar: React.FC = () => {
                 )}
               </div>
 
-              {/* OBJECT CATEGORY */}
+              {/* OBJECT */}
               <div style={{ position: 'relative' }}>
                 <button
                   style={{ ...menuItemStyle, background: activeSubmenu === 'object' ? '#363636' : 'transparent' }}
@@ -473,7 +470,7 @@ export const TopNavbar: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      top: -12,
+                      top: SUBMENU_TOP_OFFSET,
                       left: 232,
                       width: 220,
                       background: '#242424',
@@ -508,115 +505,23 @@ export const TopNavbar: React.FC = () => {
 
               <div style={separatorStyle} />
 
-              {/* PLUGINS & WIDGETS (GCP Cloud & AI Studio) */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  style={{ ...menuItemStyle, background: activeSubmenu === 'plugins' ? '#363636' : 'transparent' }}
-                  onMouseEnter={() => setActiveSubmenu('plugins')}
-                >
-                  <span>Plugins & Cloud</span>
-                  <ChevronRight size={14} color="#888888" />
-                </button>
-                {activeSubmenu === 'plugins' && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: -12,
-                      left: 232,
-                      width: 240,
-                      background: '#242424',
-                      border: '1px solid #363636',
-                      borderRadius: 12,
-                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
-                      padding: '8px 0',
-                      zIndex: 120,
-                    }}
-                  >
-                    <div style={{ padding: '8px 16px', color: '#10B981', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Cloud size={16} />
-                      <span>Cloud Sync: {room.gcpStatus.toUpperCase()}</span>
-                    </div>
-                    <div style={separatorStyle} />
-                    <button
-                      style={menuItemStyle}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <span>Bloom AI Auto-Layout</span>
-                      <span style={menuShortcutStyle}>✨ Ready</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* PREFERENCES */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  style={{ ...menuItemStyle, background: activeSubmenu === 'prefs' ? '#363636' : 'transparent' }}
-                  onMouseEnter={() => setActiveSubmenu('prefs')}
-                >
-                  <span>Preferences</span>
-                  <ChevronRight size={14} color="#888888" />
-                </button>
-                {activeSubmenu === 'prefs' && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: -12,
-                      left: 232,
-                      width: 230,
-                      background: '#242424',
-                      border: '1px solid #363636',
-                      borderRadius: 12,
-                      boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
-                      padding: '8px 0',
-                      zIndex: 120,
-                    }}
-                  >
-                    <button
-                      style={menuItemStyle}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <span>Theme Mode</span>
-                      <span style={menuShortcutStyle}>FigJam Light</span>
-                    </button>
-                    <button
-                      style={menuItemStyle}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#363636')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <span>Snap to Objects</span>
-                      <span style={{ color: '#10B981', fontSize: '0.8rem', marginLeft: 16 }}>✓ Enabled</span>
-                    </button>
-                  </div>
-                )}
+              {/* Cloud sync status — reflects real connection state, not a submenu */}
+              <div style={{ padding: '8px 16px', color: '#10B981', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Cloud size={16} />
+                <span>Cloud sync: {room.gcpStatus.toUpperCase()}</span>
               </div>
 
               <div style={separatorStyle} />
 
-              {/* HELP AND ACCOUNT */}
-              <button
-                style={menuItemStyle}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#363636';
-                  setActiveSubmenu(null);
-                }}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                onClick={() => {
-                  alert('Bloom Studio Canvas v1.0.0\nEngine: React-Konva GPU + Real-time WebSockets');
-                  setShowMenu(false);
-                }}
-              >
-                <span>Help and account</span>
-                <span style={menuShortcutStyle}>v1.0</span>
-              </button>
+              <div style={{ padding: '8px 16px', color: '#6B7280', fontSize: '0.75rem' }}>
+                Bloom Studio Canvas v1.0.0
+              </div>
             </div>
           )}
         </div>
 
         {/* Separator Divider */}
-        <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
+        <div style={{ width: 1, height: 20, background: 'rgba(20,22,26,0.08)' }} />
 
         {/* Editable Canvas Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -629,14 +534,14 @@ export const TopNavbar: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
               autoFocus
               style={{
-                background: 'rgba(0,0,0,0.04)',
-                border: '1px solid #4F46E5',
+                background: 'rgba(20,22,26,0.04)',
+                border: '1px solid #8789FF',
                 borderRadius: 6,
                 padding: '3px 8px',
                 fontSize: '0.9rem',
                 fontWeight: 600,
-                fontFamily: 'Outfit, system-ui',
-                color: '#0F172A',
+                fontFamily: '"Inter", system-ui',
+                color: '#14161A',
                 outline: 'none',
               }}
             />
@@ -650,13 +555,13 @@ export const TopNavbar: React.FC = () => {
                 borderRadius: 6,
                 fontSize: '0.9rem',
                 fontWeight: 600,
-                fontFamily: 'Outfit, system-ui',
-                color: '#0F172A',
+                fontFamily: '"Inter", system-ui',
+                color: '#14161A',
                 cursor: 'pointer',
                 transition: 'background 0.15s',
               }}
               title="Click to rename board"
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(20,22,26,0.04)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               {boardTitle}
@@ -665,7 +570,7 @@ export const TopNavbar: React.FC = () => {
         </div>
       </div>
 
-      {/* RIGHT FLOATING PILL: Multiplayer Avatars & Share Button */}
+      {/* RIGHT FLOATING PILL: Collaborator avatars & Share button */}
       <div
         style={{
           display: 'flex',
@@ -674,13 +579,13 @@ export const TopNavbar: React.FC = () => {
           padding: '6px 14px',
           background: '#FFFFFF',
           borderRadius: 12,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(20,22,26,0.08)',
+          boxShadow: '0 2px 10px rgba(20,22,26,0.08)',
           pointerEvents: 'auto',
         }}
       >
-        {/* Collaborative Peers Avatars */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: -6 }}>
+        {/* Collaborator avatars */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {Object.values(cursors).map((c) => (
             <div
               key={c.userId}
@@ -696,10 +601,10 @@ export const TopNavbar: React.FC = () => {
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 color: '#FFF',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                boxShadow: '0 2px 6px rgba(20,22,26,0.15)',
                 marginLeft: -6,
               }}
-              title={`Peer: ${c.userName} (${c.tool})`}
+              title={`${c.userName} (${c.tool})`}
             >
               {c.userName.charAt(0)}
             </div>
@@ -709,7 +614,7 @@ export const TopNavbar: React.FC = () => {
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: currentUserColor || '#4F46E5',
+              background: currentUserColor || '#8789FF',
               backgroundImage: currentUserPhoto ? `url(${currentUserPhoto})` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
@@ -719,21 +624,21 @@ export const TopNavbar: React.FC = () => {
               justifyContent: 'center',
               fontSize: '0.85rem',
               fontWeight: 700,
-              boxShadow: `0 0 0 2px #FFFFFF, 0 4px 12px ${currentUserColor || '#4F46E5'}60`,
+              boxShadow: `0 0 0 2px #FFFFFF, 0 4px 12px ${currentUserColor || '#8789FF'}60`,
               zIndex: 10,
               cursor: 'pointer',
               border: '2px solid #FFF',
               marginLeft: -6,
             }}
-            title={`You (${currentUserName})`}
+            title={`You (${currentUserName || 'User'})`}
           >
-            {!currentUserPhoto && (currentUserName || 'Venky').charAt(0).toUpperCase()}
+            {!currentUserPhoto && (currentUserName || 'U').charAt(0).toUpperCase()}
           </div>
         </div>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
+        <div style={{ width: 1, height: 20, background: 'rgba(20,22,26,0.08)' }} />
 
-        {/* Share Button (Vivid Violet, matching FigJam aesthetic) */}
+        {/* Share button */}
         <button
           onClick={handleShare}
           style={{
@@ -742,18 +647,17 @@ export const TopNavbar: React.FC = () => {
             gap: 6,
             padding: '6px 16px',
             borderRadius: 8,
-            background: '#8B5CF6',
+            background: '#8789FF',
             color: '#FFFFFF',
             fontSize: '0.85rem',
             fontWeight: 600,
             border: 'none',
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.35)',
-            transition: 'all 0.2s',
+            transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#7E22CE')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#8B5CF6')}
-          title="Share Collaborative Workspace"
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#6D6FE0')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#8789FF')}
+          title="Share this board"
         >
           <span>Share</span>
         </button>

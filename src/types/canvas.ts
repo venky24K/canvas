@@ -8,9 +8,8 @@ export type ToolType =
   | 'highlighter' 
   | 'text' 
   | 'arrow' 
-  | 'sticky' 
-  | 'eraser' 
-  | 'laser';
+  | 'sticky'
+  | 'eraser';
 
 export type GridType = 'dot' | 'line' | 'none';
 

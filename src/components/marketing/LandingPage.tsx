@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { Users, Zap, ArrowRight, LayoutDashboard, ImageIcon } from 'lucide-react';
+import { Users, Zap, ArrowRight, LayoutDashboard } from 'lucide-react';
 
 // Bloom mark — four overlapping petals, multiply-blended, matching logo.svg
 const BloomMark: React.FC<{ size?: number }> = ({ size = 32 }) => (

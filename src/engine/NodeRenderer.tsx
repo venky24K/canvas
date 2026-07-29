@@ -2,11 +2,14 @@ import React from 'react';
 import { Rect, Ellipse, Text, Group, Path, Line } from 'react-konva';
 import type { CanvasNode, FreehandNode, StickyNode, ArrowNode, ArtboardNode } from '../types/canvas';
 import getStroke from 'perfect-freehand';
+import { useCanvasStore } from '../store/useCanvasStore';
 
 interface NodeRendererProps {
   node: CanvasNode;
   isSelected: boolean;
+  isEditing?: boolean;
   onSelect: (id: string, e: any) => void;
+  onDoubleClick?: (id: string) => void;
   onChange: (id: string, newProps: Partial<CanvasNode>) => void;
 }
 
@@ -23,7 +26,10 @@ function getSvgPathFromStroke(stroke: number[][]): string {
   return `${d} Z`;
 }
 
-export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, onSelect, onChange }) => {
+export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, isEditing, onSelect, onDoubleClick, onChange }) => {
+  const activeTool = useCanvasStore((state) => state.activeTool);
+  const isDraggable = activeTool === 'select' && !node.isLocked;
+
   const handleDragEnd = (e: any) => {
     onChange(node.id, {
       x: e.target.x(),
@@ -41,7 +47,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
         <Group
           x={node.x}
           y={node.y}
-          draggable={!node.isLocked}
+          draggable={isDraggable}
           onClick={(e) => onSelect(node.id, e)}
           onTap={(e) => onSelect(node.id, e)}
           onDragEnd={handleDragEnd}
@@ -77,7 +83,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
         <Group
           x={node.x}
           y={node.y}
-          draggable={!node.isLocked}
+          draggable={isDraggable}
           onClick={(e) => onSelect(node.id, e)}
           onTap={(e) => onSelect(node.id, e)}
           onDragEnd={handleDragEnd}
@@ -116,7 +122,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
         <Group
           x={node.x}
           y={node.y}
-          draggable={!node.isLocked}
+          draggable={isDraggable}
           onClick={(e) => onSelect(node.id, e)}
           onTap={(e) => onSelect(node.id, e)}
           onDragEnd={handleDragEnd}
@@ -144,16 +150,17 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
         purple: '#C084FC',
         emerald: '#34D399',
       };
-      const bgColor = colorMap[sticky.colorPreset || 'yellow'] || '#FCD34D';
+      const bgColor = node.fillColor || colorMap[sticky.colorPreset || 'yellow'] || '#FCD34D';
 
       return (
         <Group
           x={node.x}
           y={node.y}
           rotation={node.rotation}
-          draggable={!node.isLocked}
+          draggable={isDraggable}
           onClick={(e) => onSelect(node.id, e)}
           onTap={(e) => onSelect(node.id, e)}
+          onDblClick={() => onDoubleClick?.(node.id)}
           onDragEnd={handleDragEnd}
         >
           {/* Sticky Post-it Body with Drop Shadow */}
@@ -171,6 +178,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
           />
           {/* Content Text */}
           <Text
+            visible={!isEditing}
             x={20}
             y={24}
             width={node.width - 40}
@@ -208,7 +216,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
         <Group
           x={node.x}
           y={node.y}
-          draggable={!node.isLocked}
+          draggable={isDraggable}
           onClick={(e) => onSelect(node.id, e)}
           onTap={(e) => onSelect(node.id, e)}
           onDragEnd={handleDragEnd}
@@ -229,12 +237,14 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, isSelected, on
         <Group
           x={node.x}
           y={node.y}
-          draggable={!node.isLocked}
+          draggable={isDraggable}
           onClick={(e) => onSelect(node.id, e)}
           onTap={(e) => onSelect(node.id, e)}
+          onDblClick={() => onDoubleClick?.(node.id)}
           onDragEnd={handleDragEnd}
         >
           <Text
+            visible={!isEditing}
             text={node.text || ''}
             width={node.width}
             fontSize={(node as any).fontSize || 20}
