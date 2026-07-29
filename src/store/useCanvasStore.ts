@@ -84,17 +84,26 @@ interface CanvasState {
 
 const getInitialView = (): 'landing' | 'downloads' | 'login' | 'dashboard' | 'canvas' => {
   if (typeof window !== 'undefined') {
+    const isDesktop = !!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron');
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('view') === 'login') {
       return 'login';
     }
 
     const cachedView = localStorage.getItem('bloom_active_view');
+
+    if (isDesktop) {
+      // Desktop: skip marketing, go to dashboard (or canvas if open)
+      return cachedView === 'canvas' ? 'canvas' : 'dashboard';
+    }
+
+    // Web: restore previous authenticated view, otherwise show landing
     if (cachedView === 'canvas' || cachedView === 'dashboard') {
       return cachedView;
     }
   }
-  return 'dashboard';
+  return 'landing';
 };
 
 const getInitialBoardTitle = (): string => {
@@ -111,7 +120,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   boardTitle: getInitialBoardTitle(),
   setActiveView: (view) => {
     if (typeof window !== 'undefined') {
-      if (view === 'login') {
+      if (view === 'login' || view === 'landing' || view === 'downloads') {
+        // Don't persist marketing/login views — always show landing fresh on web
         localStorage.removeItem('bloom_active_view');
       } else {
         localStorage.setItem('bloom_active_view', view);

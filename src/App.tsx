@@ -15,6 +15,21 @@ import { firebaseAuth } from './cloud/firebaseConfig';
 export const App: React.FC = () => {
   const { activeView, openBoard, setActiveView } = useCanvasStore();
 
+  // On web: check real Firebase auth state. If no authenticated user, force landing page.
+  useEffect(() => {
+    const isDesktop = !!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron');
+    if (isDesktop || !firebaseAuth) return;
+
+    const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
+      if (!user && activeView !== 'landing' && activeView !== 'downloads' && activeView !== 'login') {
+        // No real Firebase user on web — clear stale localStorage and show landing
+        localStorage.removeItem('bloom_active_view');
+        setActiveView('landing');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
@@ -71,12 +86,10 @@ export const App: React.FC = () => {
     }
   }, []); // Only register once
 
-  // Force off marketing pages
+  // Force off marketing pages on Desktop only
   useEffect(() => {
     const isElectron = !!(window as any).electronAPI || navigator.userAgent.toLowerCase().includes('electron');
     if (isElectron && (activeView === 'landing' || activeView === 'downloads')) {
-      setActiveView('dashboard');
-    } else if (!isElectron && (activeView === 'landing' || activeView === 'downloads')) {
       setActiveView('dashboard');
     }
   }, [activeView, setActiveView]);
