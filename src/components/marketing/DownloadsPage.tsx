@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Menu, X } from 'lucide-react';
 
 // Bloom mark — four overlapping petals, multiply-blended, matching logo.svg
 const BloomMark: React.FC<{ size?: number }> = ({ size = 32 }) => (
@@ -27,6 +27,7 @@ const PLATFORMS = {
 
 export const DownloadsPage: React.FC = () => {
   const { setActiveView } = useCanvasStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div
@@ -43,6 +44,84 @@ export const DownloadsPage: React.FC = () => {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+        .downloads-header {
+          padding: 0 40px;
+        }
+
+        .downloads-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 32px;
+        }
+
+        .downloads-mobile-menu-btn {
+          display: none;
+        }
+
+        .downloads-main {
+          margin: 150px auto 100px;
+          padding: 0 20px;
+        }
+
+        .downloads-h1 {
+          font-size: 3.6rem;
+          margin-bottom: 16px;
+        }
+
+        .downloads-subtitle {
+          font-size: 1.15rem;
+          margin-bottom: 64px;
+        }
+
+        .downloads-card {
+          width: 100%;
+          max-width: 360px;
+          box-sizing: border-box;
+          padding: 44px 32px 40px;
+        }
+
+        @media (max-width: 768px) {
+          .downloads-header {
+            padding: 0 20px;
+          }
+
+          .downloads-desktop-nav {
+            display: none !important;
+          }
+
+          .downloads-mobile-menu-btn {
+            display: flex !important;
+          }
+
+          .downloads-main {
+            margin: 110px auto 60px;
+            padding: 0 16px;
+          }
+
+          .downloads-h1 {
+            font-size: 2.2rem;
+            line-height: 1.2;
+            margin-bottom: 12px;
+          }
+
+          .downloads-subtitle {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            margin-bottom: 40px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .downloads-h1 {
+            font-size: 1.85rem;
+          }
+
+          .downloads-card {
+            padding: 32px 20px 28px;
+            border-radius: 20px;
+          }
+        }
       `}</style>
 
       {/* Signature element: soft blurred bloom, echoing the logo mark */}
@@ -71,6 +150,7 @@ export const DownloadsPage: React.FC = () => {
 
       {/* Navigation Header */}
       <header
+        className="downloads-header"
         style={{
           position: 'fixed',
           top: 0,
@@ -80,9 +160,9 @@ export const DownloadsPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 40px',
-          background: 'rgba(255, 255, 255, 0.8)',
+          background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid #EFEFF2',
           zIndex: 100,
         }}
@@ -90,12 +170,12 @@ export const DownloadsPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => setActiveView('landing')}
-            aria-label="Back"
-            style={{ background: 'transparent', border: 'none', color: '#6B7280', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: 0 }}
+            aria-label="Back to home"
+            style={{ background: 'transparent', border: 'none', color: '#6B7280', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: 4, borderRadius: 6 }}
           >
             <ArrowLeft size={20} />
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 4 }}>
             <BloomMark size={28} />
             <span style={{ fontFamily: '"Fraunces", serif', fontSize: '1.3rem', fontWeight: 600, letterSpacing: '-0.02em', color: '#14161A' }}>
               Bloom
@@ -103,7 +183,8 @@ export const DownloadsPage: React.FC = () => {
           </div>
         </div>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+        {/* Desktop Navigation */}
+        <nav className="downloads-desktop-nav">
           <button
             onClick={() => setActiveView('landing')}
             style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s' }}
@@ -124,16 +205,116 @@ export const DownloadsPage: React.FC = () => {
             Sign In
           </button>
         </nav>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          className="downloads-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#14161A',
+            cursor: 'pointer',
+            padding: 6,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </header>
+
+      {/* Mobile Slide-down Drawer Navigation */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 70,
+            left: 0,
+            right: 0,
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: '1px solid #EFEFF2',
+            padding: '24px 20px 32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 20,
+            zIndex: 99,
+            boxShadow: '0 12px 32px rgba(20,22,26,0.1)',
+          }}
+        >
+          <button
+            onClick={() => {
+              setActiveView('landing');
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#6B7280',
+              fontSize: '1.1rem',
+              fontWeight: 500,
+              textAlign: 'left',
+              cursor: 'pointer',
+              padding: '8px 0',
+            }}
+          >
+            Product
+          </button>
+          <button
+            onClick={() => {
+              setActiveView('downloads');
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#14161A',
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              textAlign: 'left',
+              cursor: 'pointer',
+              padding: '8px 0',
+            }}
+          >
+            Downloads
+          </button>
+          <button
+            onClick={() => {
+              setActiveView('login');
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: '#14161A',
+              color: '#fff',
+              border: 'none',
+              padding: '14px 24px',
+              borderRadius: 14,
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              marginTop: 8,
+            }}
+          >
+            Sign In
+          </button>
+        </div>
+      )}
 
       {/* Main Content */}
       <main
+        className="downloads-main"
         style={{
           position: 'relative',
           zIndex: 1,
           maxWidth: 1000,
-          margin: '150px auto 100px',
-          padding: '0 20px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -141,30 +322,28 @@ export const DownloadsPage: React.FC = () => {
         }}
       >
         <h1
+          className="downloads-h1"
           style={{
             fontFamily: '"Fraunces", serif',
-            fontSize: '3.6rem',
             fontWeight: 600,
             letterSpacing: '-0.03em',
-            margin: '0 0 16px',
             color: '#14161A',
           }}
         >
           Get Bloom for Desktop
         </h1>
-        <p style={{ fontSize: '1.15rem', color: '#6B7280', margin: '0 0 64px', maxWidth: 500, lineHeight: 1.5 }}>
+        <p className="downloads-subtitle" style={{ color: '#6B7280', maxWidth: 500, lineHeight: 1.5 }}>
           Experience the fastest collaborative canvas with native performance and offline support.
         </p>
 
-        <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
           {/* Mac Card */}
           <div
+            className="downloads-card"
             style={{
-              width: 360,
               background: '#FFFFFF',
               borderRadius: 24,
               borderTop: `4px solid ${PLATFORMS.mac.accent}`,
-              padding: '44px 32px 40px',
               boxShadow: '0 10px 40px -14px rgba(20,22,26,0.10), 0 1px 3px rgba(20,22,26,0.04)',
               display: 'flex',
               flexDirection: 'column',
@@ -247,12 +426,11 @@ export const DownloadsPage: React.FC = () => {
 
           {/* Windows Card */}
           <div
+            className="downloads-card"
             style={{
-              width: 360,
               background: '#FFFFFF',
               borderRadius: 24,
               borderTop: `4px solid ${PLATFORMS.windows.accent}`,
-              padding: '44px 32px 40px',
               boxShadow: '0 10px 40px -14px rgba(20,22,26,0.10), 0 1px 3px rgba(20,22,26,0.04)',
               display: 'flex',
               flexDirection: 'column',

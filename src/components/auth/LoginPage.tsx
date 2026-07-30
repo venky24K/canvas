@@ -87,6 +87,25 @@ export const LoginPage: React.FC = () => {
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes bloom-spin { to { transform: rotate(360deg); } }
         .bloom-spinner { animation: bloom-spin 0.8s linear infinite; }
+
+        .login-card {
+          width: 100%;
+          max-width: 400px;
+          padding: 44px 40px;
+          margin: 0 20px;
+          box-sizing: border-box;
+        }
+
+        @media (max-width: 480px) {
+          .login-card {
+            padding: 32px 20px;
+            margin: 0 16px;
+            border-radius: 20px;
+          }
+          .login-h1 {
+            font-size: 1.5rem !important;
+          }
+        }
       `}</style>
 
       {/* Signature element: soft blurred bloom, echoing the logo mark */}
@@ -97,7 +116,8 @@ export const LoginPage: React.FC = () => {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 900,
+          width: '90vw',
+          maxWidth: 900,
           height: 700,
           filter: 'blur(90px)',
           opacity: 0.4,
@@ -114,24 +134,22 @@ export const LoginPage: React.FC = () => {
 
       {/* Login Card */}
       <div
+        className="login-card"
         style={{
-          width: '100%',
-          maxWidth: 400,
           background: '#FFFFFF',
           border: '1px solid #EFEFF2',
           borderRadius: 24,
           boxShadow: '0 20px 60px -20px rgba(20,22,26,0.15)',
-          padding: '44px 40px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           zIndex: 10,
-          margin: '0 20px',
         }}
       >
         <BloomMark size={44} />
 
         <h1
+          className="login-h1"
           style={{
             fontFamily: '"Fraunces", serif',
             fontSize: '1.7rem',

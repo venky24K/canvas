@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCanvasStore } from '../../store/useCanvasStore';
-import { Users, Zap, ArrowRight, LayoutDashboard } from 'lucide-react';
+import { Users, Zap, ArrowRight, LayoutDashboard, Menu, X } from 'lucide-react';
 
 // Bloom mark — four overlapping petals, multiply-blended, matching logo.svg
 const BloomMark: React.FC<{ size?: number }> = ({ size = 32 }) => (
@@ -40,6 +40,7 @@ const FEATURES = [
 
 export const LandingPage: React.FC = () => {
   const { setActiveView } = useCanvasStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div
@@ -56,6 +57,106 @@ export const LandingPage: React.FC = () => {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+        .landing-header {
+          padding: 0 40px;
+        }
+
+        .landing-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 32px;
+        }
+
+        .landing-mobile-menu-btn {
+          display: none;
+        }
+
+        .landing-hero {
+          padding: 180px 20px 80px;
+        }
+
+        .landing-hero-h1 {
+          font-size: 4.4rem;
+        }
+
+        .landing-hero-p {
+          font-size: 1.2rem;
+          margin-bottom: 48px;
+        }
+
+        .landing-screenshot-section {
+          padding: 0 20px 100px;
+        }
+
+        .landing-features-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 32px;
+          padding: 0 20px 160px;
+        }
+
+        .landing-feature-card {
+          padding: 40px;
+        }
+
+        @media (max-width: 900px) {
+          .landing-features-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .landing-header {
+            padding: 0 20px;
+          }
+
+          .landing-desktop-nav {
+            display: none !important;
+          }
+
+          .landing-mobile-menu-btn {
+            display: flex !important;
+          }
+
+          .landing-hero {
+            padding: 120px 20px 48px;
+          }
+
+          .landing-hero-h1 {
+            font-size: 2.6rem;
+            line-height: 1.15;
+            margin-bottom: 16px;
+          }
+
+          .landing-hero-p {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 32px;
+          }
+
+          .landing-screenshot-section {
+            padding: 0 16px 60px;
+          }
+
+          .landing-features-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 0 16px 80px;
+          }
+
+          .landing-feature-card {
+            padding: 24px;
+            border-radius: 18px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .landing-hero-h1 {
+            font-size: 2.15rem;
+          }
+        }
       `}</style>
 
       {/* Signature element: soft blurred bloom, echoing the logo mark */}
@@ -84,6 +185,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Navigation Header */}
       <header
+        className="landing-header"
         style={{
           position: 'fixed',
           top: 0,
@@ -93,9 +195,9 @@ export const LandingPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 40px',
-          background: 'rgba(255, 255, 255, 0.8)',
+          background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid #EFEFF2',
           zIndex: 100,
         }}
@@ -107,7 +209,8 @@ export const LandingPage: React.FC = () => {
           </span>
         </div>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+        {/* Desktop Navigation */}
+        <nav className="landing-desktop-nav">
           <button
             onClick={() => setActiveView('landing')}
             style={{ background: 'none', border: 'none', color: '#14161A', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}
@@ -145,26 +248,116 @@ export const LandingPage: React.FC = () => {
             <ArrowRight size={16} />
           </button>
         </nav>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          className="landing-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#14161A',
+            cursor: 'pointer',
+            padding: 6,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </header>
 
+      {/* Mobile Slide-down Drawer Navigation */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 70,
+            left: 0,
+            right: 0,
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: '1px solid #EFEFF2',
+            padding: '24px 20px 32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 20,
+            zIndex: 99,
+            boxShadow: '0 12px 32px rgba(20,22,26,0.1)',
+          }}
+        >
+          <button
+            onClick={() => {
+              setActiveView('landing');
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#14161A',
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              textAlign: 'left',
+              cursor: 'pointer',
+              padding: '8px 0',
+            }}
+          >
+            Product
+          </button>
+          <button
+            onClick={() => {
+              setActiveView('downloads');
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#6B7280',
+              fontSize: '1.1rem',
+              fontWeight: 500,
+              textAlign: 'left',
+              cursor: 'pointer',
+              padding: '8px 0',
+            }}
+          >
+            Downloads
+          </button>
+          <button
+            onClick={() => {
+              setActiveView('login');
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: '#14161A',
+              color: '#fff',
+              border: 'none',
+              padding: '14px 24px',
+              borderRadius: 14,
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              marginTop: 8,
+            }}
+          >
+            Start Designing
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
-      <section
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          padding: '180px 20px 80px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          maxWidth: 1000,
-          margin: '0 auto',
-        }}
-      >
+      <section className="landing-hero" style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 1000, margin: '0 auto' }}>
         <h1
+          className="landing-hero-h1"
           style={{
             fontFamily: '"Fraunces", serif',
-            fontSize: '4.4rem',
             lineHeight: 1.1,
             fontWeight: 600,
             letterSpacing: '-0.03em',
@@ -176,8 +369,8 @@ export const LandingPage: React.FC = () => {
         </h1>
 
         <p
+          className="landing-hero-p"
           style={{
-            fontSize: '1.2rem',
             color: '#6B7280',
             maxWidth: 560,
             lineHeight: 1.6,
@@ -187,7 +380,7 @@ export const LandingPage: React.FC = () => {
           An infinite, collaborative canvas built for teams that move fast. Wireframe, map architectures, and brainstorm in real time.
         </p>
 
-        <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ display: 'flex', gap: 16, width: '100%', justifyContent: 'center' }}>
           <button
             onClick={() => setActiveView('login')}
             style={{
@@ -201,8 +394,11 @@ export const LandingPage: React.FC = () => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 12,
               transition: 'transform 0.2s, background 0.2s',
+              maxWidth: 320,
+              width: '100%',
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.background = '#34345C';
@@ -220,7 +416,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Product Screenshot Preview */}
-      <section style={{ position: 'relative', zIndex: 1, padding: '0 20px 100px', display: 'flex', justifyContent: 'center' }}>
+      <section className="landing-screenshot-section" style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'center' }}>
         <div
           style={{
             width: '100%',
@@ -239,23 +435,20 @@ export const LandingPage: React.FC = () => {
 
       {/* Features Grid */}
       <section
+        className="landing-features-grid"
         style={{
           position: 'relative',
           zIndex: 1,
-          padding: '0 20px 160px',
           maxWidth: 1200,
           margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 32,
         }}
       >
         {FEATURES.map(({ icon: Icon, accent, accentSoft, title, body }) => (
           <div
             key={title}
+            className="landing-feature-card"
             style={{
               background: '#FFFFFF',
-              padding: 40,
               borderRadius: 24,
               border: '1px solid #EFEFF2',
               boxShadow: '0 10px 40px -18px rgba(20,22,26,0.08)',
